@@ -6,6 +6,7 @@ from database import SessionLocal
 from models import WinGoResult, EngineState, PredictionLog, PendingPrediction
 import re
 import math_engine
+from ws_manager import manager as ws_manager
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -176,6 +177,9 @@ def fetch_and_store_results():
                                 db.add(new_pending)
                             
                             db.commit()
+
+                    # Notify all connected WS clients for this timer immediately
+                    ws_manager.notify(timer_type, state.last_issue)
 
     except Exception as e:
         logger.error(f"Error fetching results: {e}")

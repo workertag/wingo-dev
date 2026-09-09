@@ -1,4 +1,5 @@
-from fastapi import FastAPI, Depends
+import asyncio
+from fastapi import FastAPI, Depends, WebSocket, WebSocketDisconnect
 from datetime import datetime
 from collections import defaultdict
 from fastapi.middleware.cors import CORSMiddleware
@@ -8,6 +9,7 @@ from contextlib import asynccontextmanager
 
 import models, database, fetcher, math_engine
 from database import engine, get_db
+from ws_manager import manager as ws_manager
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -15,7 +17,10 @@ scheduler = BackgroundScheduler()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    scheduler.add_job(fetcher.fetch_and_store_results, 'interval', seconds=5)
+    # Give the WS manager access to the running event loop so the
+    # synchronous fetcher thread can schedule async broadcasts.
+    ws_manager.set_loop(asyncio.get_running_loop())
+    scheduler.add_job(fetcher.fetch_and_store_results, 'interval', seconds=2)
     scheduler.start()
     yield
     scheduler.shutdown()
@@ -83,6 +88,18 @@ def reset_engine(timer: str = "30S"):
     
     db.commit()
     return {"status": "success", "message": "Engine reset successfully. History preserved."}
+
+@app.websocket("/api/ws")
+async def websocket_endpoint(ws: WebSocket, timer: str = "30S"):
+    await ws_manager.connect(ws, timer)
+    try:
+        while True:
+            # Keep the connection alive; client can send pings / we just read
+            await ws.receive_text()
+    except WebSocketDisconnect:
+        ws_manager.disconnect(ws, timer)
+    except Exception:
+        ws_manager.disconnect(ws, timer)
 
 @app.get("/api/state")
 def get_engine_state(timer: str = "30S", db: Session = Depends(get_db)):

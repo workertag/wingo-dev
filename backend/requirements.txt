@@ -4,5 +4,6 @@ sqlalchemy
 requests
 pydantic
 apscheduler
-psycopg2-binary
-python-dotenv
+Production Server Application Deployment
+0:33
+database.py#L1-28
