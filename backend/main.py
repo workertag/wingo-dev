@@ -87,62 +87,6 @@ def get_engine_state(timer: str = "30S", db: Session = Depends(get_db)):
         "logs": logs_list
     }
 
-@app.get("/api/smart-state")
-def get_smart_state(timer: str = "30S", db: Session = Depends(get_db)):
-    results = db.query(models.WinGoResult).filter(models.WinGoResult.timer_type == timer).order_by(models.WinGoResult.issue.desc()).limit(300).all()
-    results_list = [{"issue": r.issue, "num": r.num, "sourceTime": r.source_time} for r in reversed(results)]
-    
-    state = db.query(models.SmartEngineState).filter(models.SmartEngineState.timer_type == timer).first()
-    state_dict = {}
-    if state:
-        state_dict = {
-            "bsLevel": state.bs_level,
-            "rgLevel": state.rg_level,
-            "bsShieldCooldown": state.bs_shield_cooldown,
-            "rgShieldCooldown": state.rg_shield_cooldown,
-            "gaps": state.gaps,
-            "missedRounds": state.missed_rounds
-        }
-        
-    pending = db.query(models.SmartPendingPrediction).filter(models.SmartPendingPrediction.timer_type == timer).order_by(models.SmartPendingPrediction.created_at.desc()).first()
-    pending_dict = None
-    if pending:
-        pending_dict = {
-            "issue": pending.issue,
-            "bsPred": pending.bs_pred,
-            "rgPred": pending.rg_pred,
-            "bsLayer": pending.bs_layer,
-            "rgLayer": pending.rg_layer,
-            "bsQuality": pending.bs_quality,
-            "rgQuality": pending.rg_quality
-        }
-        
-    logs = db.query(models.SmartPredictionLog).filter(models.SmartPredictionLog.timer_type == timer).order_by(models.SmartPredictionLog.id.desc()).limit(180).all()
-    logs_list = [{
-        "period": l.period,
-        "prediction": l.prediction,
-        "bsPred": l.bs_pred,
-        "rgPred": l.rg_pred,
-        "actualSide": l.actual_side,
-        "actualColour": l.actual_colour,
-        "num": l.num,
-        "bsStatus": l.bs_status,
-        "rgStatus": l.rg_status,
-        "bsLayer": l.bs_layer,
-        "rgLayer": l.rg_layer,
-        "bsQuality": l.bs_quality,
-        "rgQuality": l.rg_quality,
-        "time": l.time,
-        "feedTime": l.feed_time
-    } for l in logs]
-    
-    return {
-        "results": results_list,
-        "state": state_dict,
-        "pending": pending_dict,
-        "logs": logs_list
-    }
-
 @app.get("/api/history")
 def get_history(timer: str = "30S", page: int = 1, limit: int = 50, db: Session = Depends(get_db)):
     offset = (page - 1) * limit
@@ -223,10 +167,8 @@ def calc_stats(logs):
 @app.get("/api/analytics")
 def get_analytics(timer: str = "30S", db: Session = Depends(get_db)):
     base_logs = db.query(models.PredictionLog).filter(models.PredictionLog.timer_type == timer).order_by(models.PredictionLog.id.desc()).all()
-    smart_logs = db.query(models.SmartPredictionLog).filter(models.SmartPredictionLog.timer_type == timer).order_by(models.SmartPredictionLog.id.desc()).all()
     
     base_summary = calc_stats(base_logs)
-    smart_summary = calc_stats(smart_logs)
     
     bs_layers = {}
     for l in base_logs:
@@ -246,7 +188,6 @@ def get_analytics(timer: str = "30S", db: Session = Depends(get_db)):
             
     return {
         "summary": base_summary,
-        "smartSummary": smart_summary,
         "bsLayers": bs_layers,
         "rgLayers": rg_layers
     }
@@ -254,13 +195,10 @@ def get_analytics(timer: str = "30S", db: Session = Depends(get_db)):
 @app.get("/api/hourly-accuracy")
 def get_hourly_accuracy(timer: str = "30S", db: Session = Depends(get_db)):
     base_logs = db.query(models.PredictionLog).filter(models.PredictionLog.timer_type == timer).all()
-    smart_logs = db.query(models.SmartPredictionLog).filter(models.SmartPredictionLog.timer_type == timer).all()
     
     hours_data = defaultdict(lambda: {
         "baseBsWins": 0, "baseBsTotal": 0,
-        "baseRgWins": 0, "baseRgTotal": 0,
-        "smartBsWins": 0, "smartBsTotal": 0,
-        "smartRgWins": 0, "smartRgTotal": 0
+        "baseRgWins": 0, "baseRgTotal": 0
     })
     
     for l in base_logs:
@@ -272,17 +210,7 @@ def get_hourly_accuracy(timer: str = "30S", db: Session = Depends(get_db)):
         if l.rg_status in ['WIN', 'LOSS']:
             hours_data[hour]["baseRgTotal"] += 1
             if l.rg_status == 'WIN': hours_data[hour]["baseRgWins"] += 1
-            
-    for l in smart_logs:
-        if not l.time: continue
-        hour = datetime.fromtimestamp(l.time / 1000).hour
-        if l.bs_status in ['WIN', 'LOSS']:
-            hours_data[hour]["smartBsTotal"] += 1
-            if l.bs_status == 'WIN': hours_data[hour]["smartBsWins"] += 1
-        if l.rg_status in ['WIN', 'LOSS']:
-            hours_data[hour]["smartRgTotal"] += 1
-            if l.rg_status == 'WIN': hours_data[hour]["smartRgWins"] += 1
-            
+
     result = []
     for h in range(24):
         d = hours_data[h]
@@ -290,10 +218,7 @@ def get_hourly_accuracy(timer: str = "30S", db: Session = Depends(get_db)):
             "hour": f"{h:02d}:00",
             "baseBsWinRate": (d["baseBsWins"] / d["baseBsTotal"] * 100) if d["baseBsTotal"] > 0 else 0,
             "baseRgWinRate": (d["baseRgWins"] / d["baseRgTotal"] * 100) if d["baseRgTotal"] > 0 else 0,
-            "baseSamples": max(d["baseBsTotal"], d["baseRgTotal"]),
-            "smartBsWinRate": (d["smartBsWins"] / d["smartBsTotal"] * 100) if d["smartBsTotal"] > 0 else 0,
-            "smartRgWinRate": (d["smartRgWins"] / d["smartRgTotal"] * 100) if d["smartRgTotal"] > 0 else 0,
-            "smartSamples": max(d["smartBsTotal"], d["smartRgTotal"]),
+            "baseSamples": max(d["baseBsTotal"], d["baseRgTotal"])
         })
         
     return result

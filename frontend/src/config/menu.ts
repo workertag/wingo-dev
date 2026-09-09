@@ -24,18 +24,7 @@ export const adminMenuItems: MenuItem[] = [
     icon: LayoutDashboard,
     path: "/",
   },
-  {
-    id: "smart-feed",
-    label: "Smart Feed",
-    icon: Target,
-    path: "/smart-feed",
-  },
-  {
-    id: "hourly",
-    label: "Hourly Accuracy",
-    icon: Clock,
-    path: "/hourly",
-  },
+
   {
     id: "history",
     label: "History Logs",

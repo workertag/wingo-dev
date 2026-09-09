@@ -132,47 +132,6 @@ function AnalyticsDashboard() {
             </div>
           </div>
 
-          <div>
-            <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest mb-4">Smart Engine (Selective)</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              <div className="bg-white rounded-3xl p-6 shadow-[0_8px_30px_rgba(0,0,0,0.03)] border border-slate-100 flex items-center justify-between">
-                <div>
-                  <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Bets Placed</p>
-                  <h3 className="text-3xl font-black text-slate-800">{data.smartSummary.totalAnalyzed}</h3>
-                </div>
-                <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center text-slate-400">
-                  <Activity className="w-6 h-6" />
-                </div>
-              </div>
-              <div className="bg-gradient-to-br from-amber-400 to-amber-500 rounded-3xl p-6 shadow-[0_8px_30px_rgba(245,158,11,0.2)] border border-amber-300 flex items-center justify-between text-white">
-                <div>
-                  <p className="text-[11px] font-bold text-amber-100 uppercase tracking-widest mb-1">BS Win Rate</p>
-                  <h3 className="text-3xl font-black">{data.smartSummary.bsWinRate.toFixed(1)}%</h3>
-                </div>
-                <div className="w-12 h-12 rounded-full bg-amber-300/30 flex items-center justify-center">
-                  <PieChart className="w-6 h-6" />
-                </div>
-              </div>
-              <div className="bg-gradient-to-br from-teal-500 to-teal-600 rounded-3xl p-6 shadow-[0_8px_30px_rgba(20,184,166,0.2)] border border-teal-400 flex items-center justify-between text-white">
-                <div>
-                  <p className="text-[11px] font-bold text-teal-100 uppercase tracking-widest mb-1">RG Win Rate</p>
-                  <h3 className="text-3xl font-black">{data.smartSummary.rgWinRate.toFixed(1)}%</h3>
-                </div>
-                <div className="w-12 h-12 rounded-full bg-teal-400/30 flex items-center justify-center">
-                  <TrendingUp className="w-6 h-6" />
-                </div>
-              </div>
-              <div className="bg-gradient-to-br from-fuchsia-500 to-pink-600 rounded-3xl p-6 shadow-[0_8px_30px_rgba(217,70,239,0.2)] border border-fuchsia-400 flex items-center justify-between text-white">
-                <div>
-                  <p className="text-[11px] font-bold text-fuchsia-100 uppercase tracking-widest mb-1">Net Earnings</p>
-                  <h3 className="text-3xl font-black">${data.smartSummary.totalProfit > 0 ? '+' : ''}{data.smartSummary.totalProfit}</h3>
-                </div>
-                <div className="w-12 h-12 rounded-full bg-fuchsia-400/30 flex items-center justify-center">
-                  <TrendingUp className="w-6 h-6" />
-                </div>
-              </div>
-            </div>
-          </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="bg-white rounded-3xl p-6 shadow-[0_8px_30px_rgba(0,0,0,0.03)] border border-slate-100">

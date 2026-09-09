@@ -12,9 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as HistoryRouteImport } from './routes/history'
-import { Route as HourlyRouteImport } from './routes/hourly'
 import { Route as SettingsRouteImport } from './routes/settings'
-import { Route as SmartFeedRouteImport } from './routes/smart-feed'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -31,19 +29,9 @@ const HistoryRoute = HistoryRouteImport.update({
   path: '/history',
   getParentRoute: () => rootRouteImport,
 } as any)
-const HourlyRoute = HourlyRouteImport.update({
-  id: '/hourly',
-  path: '/hourly',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SmartFeedRoute = SmartFeedRouteImport.update({
-  id: '/smart-feed',
-  path: '/smart-feed',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -51,50 +39,34 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
   '/history': typeof HistoryRoute
-  '/hourly': typeof HourlyRoute
   '/settings': typeof SettingsRoute
-  '/smart-feed': typeof SmartFeedRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
   '/history': typeof HistoryRoute
-  '/hourly': typeof HourlyRoute
   '/settings': typeof SettingsRoute
-  '/smart-feed': typeof SmartFeedRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
   '/history': typeof HistoryRoute
-  '/hourly': typeof HourlyRoute
   '/settings': typeof SettingsRoute
-  '/smart-feed': typeof SmartFeedRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths:
-    '/' | '/analytics' | '/history' | '/hourly' | '/settings' | '/smart-feed'
+  fullPaths: '/' | '/analytics' | '/history' | '/settings'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/analytics' | '/history' | '/hourly' | '/settings' | '/smart-feed'
-  id:
-    | '__root__'
-    | '/'
-    | '/analytics'
-    | '/history'
-    | '/hourly'
-    | '/settings'
-    | '/smart-feed'
+  to: '/' | '/analytics' | '/history' | '/settings'
+  id: '__root__' | '/' | '/analytics' | '/history' | '/settings'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AnalyticsRoute: typeof AnalyticsRoute
   HistoryRoute: typeof HistoryRoute
-  HourlyRoute: typeof HourlyRoute
   SettingsRoute: typeof SettingsRoute
-  SmartFeedRoute: typeof SmartFeedRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -120,25 +92,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HistoryRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/hourly': {
-      id: '/hourly'
-      path: '/hourly'
-      fullPath: '/hourly'
-      preLoaderRoute: typeof HourlyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/settings': {
       id: '/settings'
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof SettingsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/smart-feed': {
-      id: '/smart-feed'
-      path: '/smart-feed'
-      fullPath: '/smart-feed'
-      preLoaderRoute: typeof SmartFeedRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -148,9 +106,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AnalyticsRoute: AnalyticsRoute,
   HistoryRoute: HistoryRoute,
-  HourlyRoute: HourlyRoute,
   SettingsRoute: SettingsRoute,
-  SmartFeedRoute: SmartFeedRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
