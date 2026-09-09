@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from apscheduler.schedulers.background import BackgroundScheduler
 from contextlib import asynccontextmanager
 
-import models, database, fetcher
+import models, database, fetcher, math_engine
 from database import engine, get_db
 
 models.Base.metadata.create_all(bind=engine)
@@ -30,9 +30,35 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+def get_loss_streak_stats(logs, type_str, window_size):
+    ev = [x for x in logs if getattr(x, f"{type_str}_status") in ('WIN', 'LOSS')][:window_size]
+    runs = []
+    r = 0
+    for x in reversed(ev):
+        st = getattr(x, f"{type_str}_status")
+        if st == 'LOSS':
+            r += 1
+        elif st == 'WIN':
+            if r > 0:
+                runs.append(r)
+                r = 0
+    if r > 0:
+        runs.append(r)
+    
+    counts = {}
+    for n in runs:
+        counts[n] = counts.get(n, 0) + 1
+        
+    return {
+        "n": len(ev),
+        "losses": sum(1 for x in ev if getattr(x, f"{type_str}_status") == 'LOSS'),
+        "runs": runs,
+        "counts": counts,
+        "max": max(runs) if runs else 0
+    }
+
 @app.get("/api/state")
 def get_engine_state(timer: str = "30S", db: Session = Depends(get_db)):
-    # Get last 300 results for display / frontend computation
     results = db.query(models.WinGoResult).filter(models.WinGoResult.timer_type == timer).order_by(models.WinGoResult.issue.desc()).limit(1000).all()
     results_list = [{"issue": r.issue, "num": r.num, "sourceTime": r.source_time} for r in reversed(results)]
     
@@ -61,7 +87,43 @@ def get_engine_state(timer: str = "30S", db: Session = Depends(get_db)):
             "rgQuality": pending.rg_quality
         }
         
-    logs = db.query(models.PredictionLog).filter(models.PredictionLog.timer_type == timer).order_by(models.PredictionLog.id.desc()).limit(180).all()
+    logs = db.query(models.PredictionLog).filter(models.PredictionLog.timer_type == timer).order_by(models.PredictionLog.id.desc()).limit(1000).all()
+    
+    windows = [100, 200, 300, 500, 1000, 999999]
+    loss_stats = {
+        "bs": [get_loss_streak_stats(logs, "bs", w) for w in windows],
+        "rg": [get_loss_streak_stats(logs, "rg", w) for w in windows]
+    }
+    
+    # Compute accuracy & regimes
+    all_nums = [r.num for r in reversed(results)]
+    bs_regime = math_engine.bs_regime(all_nums[-300:]) if all_nums else "BUILDING"
+    rg_regime = math_engine.rg_regime(all_nums[-300:]) if all_nums else "BUILDING"
+    
+    bs_wfa = math_engine.bs_wfa(all_nums[-300:])
+    rg_wfa = math_engine.rg_wfa(all_nums[-300:])
+    
+    bs_logs = [x for x in logs if x.bs_status in ('WIN', 'LOSS')]
+    rg_logs = [x for x in logs if x.rg_status in ('WIN', 'LOSS')]
+    both_logs = [x for x in logs if x.bs_status in ('WIN', 'LOSS') and x.rg_status in ('WIN', 'LOSS')]
+    
+    bs_acc = (sum(1 for x in bs_logs if x.bs_status == 'WIN') / len(bs_logs)) if bs_logs else 0
+    rg_acc = (sum(1 for x in rg_logs if x.rg_status == 'WIN') / len(rg_logs)) if rg_logs else 0
+    dual_acc = (sum(1 for x in both_logs if x.bs_status == 'WIN' and x.rg_status == 'WIN') / len(both_logs)) if both_logs else 0
+    
+    monitor_stats = {
+        "totalVerified": len(results_list),
+        "bsAcc": bs_acc,
+        "rgAcc": rg_acc,
+        "dualAcc": dual_acc,
+        "bsRegime": bs_regime,
+        "rgRegime": rg_regime,
+        "gaps": state.gaps if state else 0,
+        "missedRounds": state.missed_rounds if state else 0,
+        "bsWfa": bs_wfa,
+        "rgWfa": rg_wfa
+    }
+    
     logs_list = [{
         "period": l.period,
         "prediction": l.prediction,
@@ -78,13 +140,15 @@ def get_engine_state(timer: str = "30S", db: Session = Depends(get_db)):
         "rgQuality": l.rg_quality,
         "time": l.time,
         "feedTime": l.feed_time
-    } for l in logs]
+    } for l in logs[:180]]
     
     return {
         "results": results_list,
         "state": state_dict,
         "pending": pending_dict,
-        "logs": logs_list
+        "logs": logs_list,
+        "lossStats": loss_stats,
+        "monitorStats": monitor_stats
     }
 
 @app.get("/api/history")

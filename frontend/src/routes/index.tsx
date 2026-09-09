@@ -41,6 +41,8 @@ function Dashboard() {
     logs: [],
     state: {},
     pending: null,
+    lossStats: null,
+    monitorStats: null
   });
   const [timerLeft, setTimerLeft] = useState("--");
   const [feedOk, setFeedOk] = useState(false);
@@ -83,8 +85,8 @@ function Dashboard() {
     return () => cancelAnimationFrame(req);
   }, [activeTab]);
 
-  const latestIssue =
-    data.results && data.results.length > 0 ? data.results[0] : null;
+  const resultsArray = data.results || [];
+  const latestIssue = resultsArray && resultsArray.length > 0 ? resultsArray[resultsArray.length - 1] : null;
   const pending = data.pending || {
     bsPred: "WAITING",
     rgPred: "WAITING",
@@ -94,7 +96,8 @@ function Dashboard() {
     rgLayer: "—",
   };
   const state = data.state || { bsLevel: 1, rgLevel: 1 };
-  const resultsArray = data.results || [];
+  const lossStats = data.lossStats || { bs: [], rg: [] };
+  const monitorStats = data.monitorStats || {};
 
   return (
     <div className="px-6 sm:px-8 pb-12 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
@@ -130,7 +133,7 @@ function Dashboard() {
           </div>
           
           <div className="flex items-center gap-6">
-            {/* Tab Switcher matching Mockup */}
+            {/* Tab Switcher */}
             <div className="flex p-1.5 bg-white rounded-full shadow-[0_2px_10px_rgba(0,0,0,0.04)] border border-slate-100">
               <button
                 onClick={() => setActiveTab("30S")}
@@ -193,7 +196,7 @@ function Dashboard() {
               initial={{ opacity: 0.5, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               className={`text-[80px] leading-none font-black text-transparent bg-clip-text drop-shadow-sm tracking-tighter ${
-                timerLeft <= 5 
+                Number(timerLeft) <= 5 
                   ? "bg-gradient-to-b from-red-500 to-red-700" 
                   : "bg-gradient-to-b from-orange-400 to-orange-600"
               }`}
@@ -234,7 +237,7 @@ function Dashboard() {
                 exit={{ opacity: 0, y: -10 }}
                 className={`text-[56px] leading-none font-black tracking-tighter uppercase ${
                   pending.bsPred === "BIG" ? "text-emerald-500" :
-                  pending.bsPred === "SMALL" ? "text-red-500" : "text-slate-300"
+                  pending.bsPred === "SMALL" ? "text-rose-500" : "text-slate-300"
                 }`}
               >
                 {pending.bsPred || "WAITING"}
@@ -311,14 +314,11 @@ function Dashboard() {
                 <p className="text-[11px] font-medium text-slate-400">Latest results verified by WinGo engine</p>
               </div>
             </div>
-            <button className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1">
-              View History <ChevronRight className="w-4 h-4" />
-            </button>
           </div>
 
           <div className="grid grid-cols-5 gap-y-6 gap-x-2 sm:gap-x-3 items-end mb-6 pb-2">
             <AnimatePresence>
-              {resultsArray.slice(0, 10).map((r: any, i: number) => {
+              {[...resultsArray].reverse().slice(0, 10).map((r: any, i: number) => {
                 const color = colourClass(r.num);
                 let bgClass = "bg-slate-800 shadow-slate-500/30";
                 if (color === "r") bgClass = "bg-rose-500 shadow-rose-500/30";
@@ -462,8 +462,8 @@ function Dashboard() {
                   </td>
                   <td className="p-4">
                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-white shadow-sm ${
-                      row.actualColour === 'green' ? 'bg-emerald-500' :
-                      row.actualColour === 'red' ? 'bg-rose-500' : 'bg-violet-500'
+                      row.actualColour === 'GREEN' ? 'bg-emerald-500' :
+                      row.actualColour === 'RED' ? 'bg-rose-500' : 'bg-violet-500'
                     }`}>
                       {row.num}
                     </div>
@@ -506,8 +506,211 @@ function Dashboard() {
         </div>
       </div>
 
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+        {/* Loss-Streak Monitor */}
+        <div className="bg-white rounded-3xl p-6 shadow-[0_8px_30px_rgba(0,0,0,0.03)] border border-slate-100 flex flex-col">
+          <div className="flex items-start gap-3 mb-6">
+            <div className="mt-1 text-orange-500">
+              <Activity className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-base font-black text-slate-900">Loss-Streak / Downside Monitor</h2>
+              <p className="text-[11px] font-medium text-slate-400">Total consecutive LOSS streak statistics</p>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
+            <div className="bg-slate-50 rounded-xl p-3 text-center border border-slate-100">
+              <div className="text-[10px] text-slate-400 font-bold mb-1">BS Total Losses</div>
+              <div className="text-lg font-black text-slate-800">{lossStats?.bs?.[5]?.losses || 0}</div>
+            </div>
+            <div className="bg-slate-50 rounded-xl p-3 text-center border border-slate-100">
+              <div className="text-[10px] text-slate-400 font-bold mb-1">BS Max Streak</div>
+              <div className="text-lg font-black text-slate-800">{lossStats?.bs?.[5]?.max || 0}</div>
+            </div>
+            <div className="bg-slate-50 rounded-xl p-3 text-center border border-slate-100">
+              <div className="text-[10px] text-slate-400 font-bold mb-1">RG Total Losses</div>
+              <div className="text-lg font-black text-slate-800">{lossStats?.rg?.[5]?.losses || 0}</div>
+            </div>
+            <div className="bg-slate-50 rounded-xl p-3 text-center border border-slate-100">
+              <div className="text-[10px] text-slate-400 font-bold mb-1">RG Max Streak</div>
+              <div className="text-lg font-black text-slate-800">{lossStats?.rg?.[5]?.max || 0}</div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+            <div className="bg-slate-50 rounded-xl p-3 text-center border border-slate-100">
+              <div className="text-[10px] text-slate-400 font-bold mb-1">BS Settled</div>
+              <div className="text-lg font-black text-slate-800">{lossStats?.bs?.[5]?.n || 0}</div>
+            </div>
+            <div className="bg-slate-50 rounded-xl p-3 text-center border border-slate-100">
+              <div className="text-[10px] text-slate-400 font-bold mb-1">BS Loss Rate</div>
+              <div className="text-lg font-black text-slate-800">
+                {lossStats?.bs?.[5]?.n ? Math.round((lossStats.bs[5].losses / lossStats.bs[5].n) * 100) + '%' : '—'}
+              </div>
+            </div>
+            <div className="bg-slate-50 rounded-xl p-3 text-center border border-slate-100">
+              <div className="text-[10px] text-slate-400 font-bold mb-1">RG Settled</div>
+              <div className="text-lg font-black text-slate-800">{lossStats?.rg?.[5]?.n || 0}</div>
+            </div>
+            <div className="bg-slate-50 rounded-xl p-3 text-center border border-slate-100">
+              <div className="text-[10px] text-slate-400 font-bold mb-1">RG Loss Rate</div>
+              <div className="text-lg font-black text-slate-800">
+                {lossStats?.rg?.[5]?.n ? Math.round((lossStats.rg[5].losses / lossStats.rg[5].n) * 100) + '%' : '—'}
+              </div>
+            </div>
+          </div>
+          
+          <div className="overflow-x-auto flex-1 mb-4">
+            <table className="w-full text-center text-xs border-collapse">
+              <thead>
+                <tr className="bg-slate-50 text-slate-400 font-bold">
+                  <th className="p-2 border border-slate-100">Streak</th>
+                  <th colSpan={6} className="p-2 border border-slate-100">BS • Latest Settled Windows</th>
+                  <th colSpan={6} className="p-2 border border-slate-100">RG • Latest Settled Windows</th>
+                </tr>
+                <tr className="bg-slate-50/50 text-[10px] text-slate-500 font-bold">
+                  <th className="p-2 border border-slate-100"></th>
+                  <th className="p-2 border border-slate-100">100</th>
+                  <th className="p-2 border border-slate-100">200</th>
+                  <th className="p-2 border border-slate-100">300</th>
+                  <th className="p-2 border border-slate-100">500</th>
+                  <th className="p-2 border border-slate-100">1000</th>
+                  <th className="p-2 border border-slate-100">ALL</th>
+                  <th className="p-2 border border-slate-100">100</th>
+                  <th className="p-2 border border-slate-100">200</th>
+                  <th className="p-2 border border-slate-100">300</th>
+                  <th className="p-2 border border-slate-100">500</th>
+                  <th className="p-2 border border-slate-100">1000</th>
+                  <th className="p-2 border border-slate-100">ALL</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[1,2,3,4,5,6,7,8,9,10].map(k => (
+                  <tr key={k} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="p-2 border border-slate-100 font-bold text-slate-600">{k} loss{k > 1 ? 'es' : ''}</td>
+                    {lossStats?.bs?.map((w: any, i: number) => (
+                        <td key={`bs-${i}`} className="p-2 border border-slate-100 text-slate-500">{w?.counts?.[k] || 0}</td>
+                    ))}
+                    {lossStats?.rg?.map((w: any, i: number) => (
+                        <td key={`rg-${i}`} className="p-2 border border-slate-100 text-slate-500">{w?.counts?.[k] || 0}</td>
+                    ))}
+                  </tr>
+                ))}
+                <tr className="hover:bg-slate-50/50 transition-colors">
+                  <td className="p-2 border border-slate-100 font-bold text-slate-600">11+ losses</td>
+                  {lossStats?.bs?.map((w: any, i: number) => (
+                      <td key={`bs-11-${i}`} className="p-2 border border-slate-100 text-slate-500">{w?.runs?.filter((n: number) => n >= 11).length || 0}</td>
+                  ))}
+                  {lossStats?.rg?.map((w: any, i: number) => (
+                      <td key={`rg-11-${i}`} className="p-2 border border-slate-100 text-slate-500">{w?.runs?.filter((n: number) => n >= 11).length || 0}</td>
+                  ))}
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div className="bg-slate-50 rounded-xl p-3 flex items-center text-[10px] font-semibold text-slate-500 border border-slate-100">
+            Exact streaks only. Windows use the latest settled WIN/LOSS records for each engine independently.
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-6">
+          {/* Performance / Integrity Monitor */}
+          <div className="bg-white rounded-3xl p-6 shadow-[0_8px_30px_rgba(0,0,0,0.03)] border border-slate-100">
+            <div className="flex items-start gap-3 mb-6">
+              <div className="mt-1 text-emerald-500">
+                <Zap className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-base font-black text-slate-900">Performance / Integrity Monitor</h2>
+                <p className="text-[11px] font-medium text-slate-400">System health and accuracy metrics</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
+              <div className="bg-slate-50 rounded-xl p-3 text-center border border-slate-100">
+                <div className="text-[10px] text-slate-400 font-bold mb-1">Verified Results</div>
+                <div className="text-lg font-black text-slate-800">{monitorStats?.totalVerified || 0}</div>
+              </div>
+              <div className="bg-slate-50 rounded-xl p-3 text-center border border-slate-100">
+                <div className="text-[10px] text-slate-400 font-bold mb-1">BS Accuracy</div>
+                <div className="text-lg font-black text-slate-800">{monitorStats?.bsAcc != null ? Math.round(monitorStats.bsAcc * 100) + '%' : '—'}</div>
+              </div>
+              <div className="bg-slate-50 rounded-xl p-3 text-center border border-slate-100">
+                <div className="text-[10px] text-slate-400 font-bold mb-1">RG Accuracy</div>
+                <div className="text-lg font-black text-slate-800">{monitorStats?.rgAcc != null ? Math.round(monitorStats.rgAcc * 100) + '%' : '—'}</div>
+              </div>
+              <div className="bg-slate-50 rounded-xl p-3 text-center border border-slate-100">
+                <div className="text-[10px] text-slate-400 font-bold mb-1">Both Win %</div>
+                <div className="text-lg font-black text-slate-800">{monitorStats?.dualAcc != null ? Math.round(monitorStats.dualAcc * 100) + '%' : '—'}</div>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
+              <div className="bg-slate-50 rounded-xl p-3 text-center border border-slate-100">
+                <div className="text-[10px] text-slate-400 font-bold mb-1">BS Regime</div>
+                <div className="text-sm font-black text-amber-600">{monitorStats?.bsRegime || 'BUILDING'}</div>
+              </div>
+              <div className="bg-slate-50 rounded-xl p-3 text-center border border-slate-100">
+                <div className="text-[10px] text-slate-400 font-bold mb-1">RG Regime</div>
+                <div className="text-sm font-black text-amber-600">{monitorStats?.rgRegime || 'BUILDING'}</div>
+              </div>
+              <div className="bg-slate-50 rounded-xl p-3 text-center border border-slate-100">
+                <div className="text-[10px] text-slate-400 font-bold mb-1">Feed Gaps</div>
+                <div className="text-lg font-black text-slate-800">{monitorStats?.gaps || 0}</div>
+              </div>
+              <div className="bg-slate-50 rounded-xl p-3 text-center border border-slate-100">
+                <div className="text-[10px] text-slate-400 font-bold mb-1">Missed Rounds</div>
+                <div className="text-lg font-black text-slate-800">{monitorStats?.missedRounds || 0}</div>
+              </div>
+            </div>
+            <div className="bg-slate-50 rounded-xl p-3 flex items-center text-[10px] font-semibold text-slate-500 border border-slate-100">
+              Monitoring frequency, transitions, runs, persistence, Markov candidates, EWMA and ensemble agreement.
+            </div>
+          </div>
+
+          {/* Strategy Lab */}
+          <div className="bg-white rounded-3xl p-6 shadow-[0_8px_30px_rgba(0,0,0,0.03)] border border-slate-100">
+            <div className="flex items-start gap-3 mb-6">
+              <div className="mt-1 text-violet-500">
+                <BarChart3 className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-base font-black text-slate-900">Strategy Lab • Multi-method validation</h2>
+                <p className="text-[11px] font-medium text-slate-400">Adaptive candidate validation</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
+              <div className="bg-slate-50 rounded-xl p-3 text-center border border-slate-100 overflow-hidden text-ellipsis whitespace-nowrap">
+                <div className="text-[10px] text-slate-400 font-bold mb-1">BS Best Layer</div>
+                <div className="text-xs font-black text-slate-800 truncate" title={monitorStats?.bsWfa?.ready && monitorStats?.bsWfa?.best ? monitorStats.bsWfa.best.name : '—'}>
+                  {monitorStats?.bsWfa?.ready && monitorStats?.bsWfa?.best ? monitorStats.bsWfa.best.name : '—'}
+                </div>
+              </div>
+              <div className="bg-slate-50 rounded-xl p-3 text-center border border-slate-100">
+                <div className="text-[10px] text-slate-400 font-bold mb-1">BS WFA</div>
+                <div className="text-lg font-black text-slate-800">{monitorStats?.bsWfa?.ready && monitorStats?.bsWfa?.best ? Math.round(monitorStats.bsWfa.best.acc * 100) + '%' : '—'}</div>
+              </div>
+              <div className="bg-slate-50 rounded-xl p-3 text-center border border-slate-100 overflow-hidden text-ellipsis whitespace-nowrap">
+                <div className="text-[10px] text-slate-400 font-bold mb-1">RG Best Layer</div>
+                <div className="text-xs font-black text-slate-800 truncate" title={monitorStats?.rgWfa?.ready && monitorStats?.rgWfa?.best ? monitorStats.rgWfa.best.name : '—'}>
+                  {monitorStats?.rgWfa?.ready && monitorStats?.rgWfa?.best ? monitorStats.rgWfa.best.name : '—'}
+                </div>
+              </div>
+              <div className="bg-slate-50 rounded-xl p-3 text-center border border-slate-100">
+                <div className="text-[10px] text-slate-400 font-bold mb-1">RG WFA</div>
+                <div className="text-lg font-black text-slate-800">{monitorStats?.rgWfa?.ready && monitorStats?.rgWfa?.best ? Math.round(monitorStats.rgWfa.best.acc * 100) + '%' : '—'}</div>
+              </div>
+            </div>
+            <div className="bg-slate-50 rounded-xl p-3 text-[10px] font-semibold text-slate-500 text-center border border-slate-100">
+              {monitorStats?.bsWfa?.ready || monitorStats?.rgWfa?.ready 
+                ? "Adaptive candidates are measured out-of-sample; fallback remains available when gates fail."
+                : "Need 120+ verified results before adaptive candidate validation activates."}
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Footer Banner */}
-      <div className="bg-white/50 border border-indigo-100/50 rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+      <div className="bg-white/50 border border-indigo-100/50 rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left mt-8">
         <div className="flex items-center gap-4">
           <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-500">
             <BarChart3 className="w-5 h-5" />
@@ -567,3 +770,4 @@ function ChevronRight(props: any) {
     </svg>
   );
 }
+
