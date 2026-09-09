@@ -1,0 +1,12 @@
+{
+  "name": "wingo-dev",
+  "version": "1.0.0",
+  "description": "WinGo Full-Stack Application",
+  "scripts": {
+    "dev": "npx concurrently \"cd backend && source venv/bin/activate && uvicorn main:app --port 8000\" \"cd frontend && npm run dev\"",
+    "install:all": "cd frontend && npm install && cd ../backend && python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt"
+  },
+  "dependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
