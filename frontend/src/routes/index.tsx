@@ -215,7 +215,7 @@ function Dashboard() {
 
         {/* BS Prediction */}
         <div 
-          className="relative bg-white rounded-3xl p-6 shadow-[0_8px_30px_rgba(0,0,0,0.03)] border border-slate-100 overflow-hidden flex flex-col justify-between h-[220px]"
+          className="relative bg-white rounded-3xl p-6 shadow-[0_8px_30px_rgba(0,0,0,0.03)] border border-slate-100 overflow-hidden flex flex-col justify-between min-h-[260px]"
           style={{ backgroundImage: waveBg2, backgroundPosition: 'bottom', backgroundRepeat: 'no-repeat', backgroundSize: 'cover' }}
         >
           <div className="flex items-start gap-3">
@@ -228,7 +228,7 @@ function Dashboard() {
             </div>
           </div>
           
-          <div className="flex-1 flex items-center justify-center">
+          <div className="flex-1 flex flex-col items-center justify-center mt-2 mb-4">
             <AnimatePresence mode="wait">
               <motion.div
                 key={pending.bsPred}
@@ -243,19 +243,30 @@ function Dashboard() {
                 {pending.bsPred || "WAITING"}
               </motion.div>
             </AnimatePresence>
+            <div className="mt-2 text-[10px] font-medium text-slate-500/80 tracking-wide text-center">
+              Quality {pending.bsQuality || '—'} • regime {pending.bsRegime || 'BUILDING'} • score is not prob
+            </div>
           </div>
 
-          <div className="flex items-center justify-between text-xs font-semibold pt-4 border-t border-blue-200/30">
-            <span className="text-slate-400 flex items-center gap-1">
-              <Layers className="w-3.5 h-3.5" /> Layer
-            </span>
-            <span className="text-slate-800">{pending.bsLayer}</span>
+          <div className="grid grid-cols-3 gap-2 pt-4 border-t border-blue-200/30 bg-white/40 backdrop-blur-sm rounded-xl p-2">
+            <div className="text-center flex flex-col justify-center">
+              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Big Score</span>
+              <span className="text-sm font-black text-slate-800">{pending.bsScoreB ?? '—'}</span>
+            </div>
+            <div className="text-center flex flex-col justify-center border-x border-slate-200/60">
+              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Small Score</span>
+              <span className="text-sm font-black text-slate-800">{pending.bsScoreS ?? '—'}</span>
+            </div>
+            <div className="text-center flex flex-col justify-center items-center">
+              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Layer</span>
+              <span className="text-[10px] font-bold text-slate-700 bg-white shadow-sm px-2 py-0.5 rounded border border-slate-100 w-full truncate">{pending.bsLayer}</span>
+            </div>
           </div>
         </div>
 
         {/* RG Prediction */}
         <div 
-          className="relative bg-white rounded-3xl p-6 shadow-[0_8px_30px_rgba(0,0,0,0.03)] border border-slate-100 overflow-hidden flex flex-col justify-between h-[220px]"
+          className="relative bg-white rounded-3xl p-6 shadow-[0_8px_30px_rgba(0,0,0,0.03)] border border-slate-100 overflow-hidden flex flex-col justify-between min-h-[260px]"
           style={{ backgroundImage: waveBg3, backgroundPosition: 'bottom', backgroundRepeat: 'no-repeat', backgroundSize: 'cover' }}
         >
           <div className="flex items-start gap-3">
@@ -271,7 +282,7 @@ function Dashboard() {
             </div>
           </div>
           
-          <div className="flex-1 flex items-center justify-center">
+          <div className="flex-1 flex flex-col items-center justify-center mt-2 mb-4">
             <AnimatePresence mode="wait">
               <motion.div
                 key={pending.rgPred}
@@ -287,13 +298,28 @@ function Dashboard() {
                 {pending.rgPred || "WAITING"}
               </motion.div>
             </AnimatePresence>
+            <div className="mt-2 text-[10px] font-medium text-slate-500/80 tracking-wide text-center">
+              Quality {pending.rgQuality || '—'} • regime {pending.rgRegime || 'BUILDING'} • score is not prob
+            </div>
           </div>
 
-          <div className="flex items-center justify-between text-xs font-semibold pt-4 border-t border-violet-200/30">
-            <span className="text-slate-400 flex items-center gap-1">
-              <Layers className="w-3.5 h-3.5" /> Layer
-            </span>
-            <span className="text-slate-800">{pending.rgLayer}</span>
+          <div className="grid grid-cols-4 gap-1 pt-4 border-t border-violet-200/30 bg-white/40 backdrop-blur-sm rounded-xl p-2">
+            <div className="text-center flex flex-col justify-center">
+              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Red</span>
+              <span className="text-sm font-black text-slate-800">{pending.rgScoreR ?? '—'}</span>
+            </div>
+            <div className="text-center flex flex-col justify-center border-x border-slate-200/60">
+              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Green</span>
+              <span className="text-sm font-black text-slate-800">{pending.rgScoreG ?? '—'}</span>
+            </div>
+            <div className="text-center flex flex-col justify-center border-r border-slate-200/60">
+              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Violet</span>
+              <span className="text-sm font-black text-slate-800">{pending.rgScoreV ?? '—'}</span>
+            </div>
+            <div className="text-center flex flex-col justify-center items-center px-1">
+              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Layer</span>
+              <span className="text-[9px] font-bold text-slate-700 bg-white shadow-sm px-1 py-0.5 rounded border border-slate-100 w-full truncate" title={pending.rgLayer}>{pending.rgLayer}</span>
+            </div>
           </div>
         </div>
 

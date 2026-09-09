@@ -77,6 +77,13 @@ def get_engine_state(timer: str = "30S", db: Session = Depends(get_db)):
     pending = db.query(models.PendingPrediction).filter(models.PendingPrediction.timer_type == timer).order_by(models.PendingPrediction.created_at.desc()).first()
     pending_dict = None
     if pending:
+        all_nums = [r.num for r in reversed(results)]
+        h_slice = all_nums[-300:] if all_nums else []
+        bs_base_res = math_engine.bs_base(h_slice)
+        rg_base_res = math_engine.rg_base(h_slice)
+        bs_reg = math_engine.bs_regime(h_slice)
+        rg_reg = math_engine.rg_regime(h_slice)
+        
         pending_dict = {
             "issue": pending.issue,
             "bsPred": pending.bs_pred,
@@ -84,7 +91,14 @@ def get_engine_state(timer: str = "30S", db: Session = Depends(get_db)):
             "bsLayer": pending.bs_layer,
             "rgLayer": pending.rg_layer,
             "bsQuality": pending.bs_quality,
-            "rgQuality": pending.rg_quality
+            "rgQuality": pending.rg_quality,
+            "bsRegime": bs_reg,
+            "rgRegime": rg_reg,
+            "bsScoreB": round(bs_base_res.get("B", 0), 1),
+            "bsScoreS": round(bs_base_res.get("S", 0), 1),
+            "rgScoreR": round(rg_base_res.get("scores", [0,0,0])[0], 1),
+            "rgScoreG": round(rg_base_res.get("scores", [0,0,0])[1], 1),
+            "rgScoreV": round(rg_base_res.get("scores", [0,0,0])[2], 1)
         }
         
     logs = db.query(models.PredictionLog).filter(models.PredictionLog.timer_type == timer).order_by(models.PredictionLog.id.desc()).limit(1000).all()
