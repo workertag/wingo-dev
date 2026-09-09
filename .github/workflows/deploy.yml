@@ -1,0 +1,53 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+
+      - name: Install Frontend Dependencies
+        run: cd frontend && bun install
+
+      - name: Build Frontend
+        run: cd frontend && bun run build
+
+      - name: Deploy via Rsync
+        uses: easingthemes/ssh-deploy@main
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          ARGS: "-avz --exclude 'venv' --exclude '__pycache__' --exclude '*.db' --exclude '.env' --exclude 'node_modules'"
+          SOURCE: "./"
+          REMOTE_HOST: ${{ secrets.SERVER_IP }}
+          REMOTE_USER: ${{ secrets.SSH_USER }}
+          TARGET: "/root/wingo-dev/deploy-temp/"
+
+      - name: Execute Remote Setup & Restart
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            # Copy backend files over (ignoring local venv/db)
+            rsync -a /root/wingo-dev/deploy-temp/backend/ /root/wingo-dev/backend/
+            
+            # Copy frontend dist to Nginx web root
+            rsync -a /root/wingo-dev/deploy-temp/frontend/dist/ /var/www/wingo-dev/
+            
+            # Restart backend daemon
+            cd /root/wingo-dev/backend
+            ./venv/bin/pip install -r requirements.txt
+            lsof -ti :8001 | xargs kill -9 2>/dev/null || true
+            
+            # Clean up temporary upload folder
+            rm -rf /root/wingo-dev/deploy-temp/
