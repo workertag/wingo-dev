@@ -532,7 +532,7 @@ function Dashboard() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+      <div className="flex flex-col gap-6 mt-6">
         {/* Loss-Streak Monitor */}
         <div className="bg-white rounded-3xl p-6 shadow-[0_8px_30px_rgba(0,0,0,0.03)] border border-slate-100 flex flex-col">
           <div className="flex items-start gap-3 mb-6">
@@ -545,7 +545,7 @@ function Dashboard() {
             </div>
           </div>
           
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-4 mb-4">
             <div className="bg-slate-50 rounded-xl p-3 text-center border border-slate-100">
               <div className="text-[10px] text-slate-400 font-bold mb-1">BS Total Losses</div>
               <div className="text-lg font-black text-slate-800">{lossStats?.bs?.[5]?.losses || 0}</div>
@@ -555,17 +555,6 @@ function Dashboard() {
               <div className="text-lg font-black text-slate-800">{lossStats?.bs?.[5]?.max || 0}</div>
             </div>
             <div className="bg-slate-50 rounded-xl p-3 text-center border border-slate-100">
-              <div className="text-[10px] text-slate-400 font-bold mb-1">RG Total Losses</div>
-              <div className="text-lg font-black text-slate-800">{lossStats?.rg?.[5]?.losses || 0}</div>
-            </div>
-            <div className="bg-slate-50 rounded-xl p-3 text-center border border-slate-100">
-              <div className="text-[10px] text-slate-400 font-bold mb-1">RG Max Streak</div>
-              <div className="text-lg font-black text-slate-800">{lossStats?.rg?.[5]?.max || 0}</div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-            <div className="bg-slate-50 rounded-xl p-3 text-center border border-slate-100">
               <div className="text-[10px] text-slate-400 font-bold mb-1">BS Settled</div>
               <div className="text-lg font-black text-slate-800">{lossStats?.bs?.[5]?.n || 0}</div>
             </div>
@@ -574,6 +563,14 @@ function Dashboard() {
               <div className="text-lg font-black text-slate-800">
                 {lossStats?.bs?.[5]?.n ? Math.round((lossStats.bs[5].losses / lossStats.bs[5].n) * 100) + '%' : '—'}
               </div>
+            </div>
+            <div className="bg-slate-50 rounded-xl p-3 text-center border border-slate-100">
+              <div className="text-[10px] text-slate-400 font-bold mb-1">RG Total Losses</div>
+              <div className="text-lg font-black text-slate-800">{lossStats?.rg?.[5]?.losses || 0}</div>
+            </div>
+            <div className="bg-slate-50 rounded-xl p-3 text-center border border-slate-100">
+              <div className="text-[10px] text-slate-400 font-bold mb-1">RG Max Streak</div>
+              <div className="text-lg font-black text-slate-800">{lossStats?.rg?.[5]?.max || 0}</div>
             </div>
             <div className="bg-slate-50 rounded-xl p-3 text-center border border-slate-100">
               <div className="text-[10px] text-slate-400 font-bold mb-1">RG Settled</div>
@@ -640,9 +637,9 @@ function Dashboard() {
           </div>
         </div>
 
-        <div className="flex flex-col gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Performance / Integrity Monitor */}
-          <div className="bg-white rounded-3xl p-6 shadow-[0_8px_30px_rgba(0,0,0,0.03)] border border-slate-100">
+          <div className="bg-white rounded-3xl p-6 shadow-[0_8px_30px_rgba(0,0,0,0.03)] border border-slate-100 h-full flex flex-col">
             <div className="flex items-start gap-3 mb-6">
               <div className="mt-1 text-emerald-500">
                 <Zap className="w-5 h-5" />
