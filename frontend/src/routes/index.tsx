@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Zap, Activity, Info, BarChart3, Layers, Radio } from "lucide-react";
+import { Zap, Activity, Info, BarChart3, Layers, Radio, Download, RotateCcw } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   component: Dashboard,
@@ -84,6 +84,32 @@ function Dashboard() {
     const req = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(req);
   }, [activeTab]);
+
+  const exportCSV = () => {
+    if (!data.logs || data.logs.length === 0) return;
+    const header = "Period,Prediction,Actual,Digit,BS,Colour,Layer\n";
+    const rows = data.logs.map((row: any) => 
+      `${row.period},${row.bsPred}/${row.rgPred},${row.actualSide}/${row.actualColour},${row.num},${row.bsStatus},${row.rgStatus},BS:${row.bsLayer}/RG:${row.rgLayer}`
+    ).join("\n");
+    const blob = new Blob([header + rows], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `wingo_logs_${activeTab}_${new Date().getTime()}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
+  const resetEngine = async () => {
+    if (confirm("Are you sure you want to reset the engine for " + activeTab + "? This will clear prediction history but keep verified results.")) {
+      try {
+        await fetch(`/api/reset?timer=${activeTab}`, { method: 'POST' });
+        alert("Engine reset successfully.");
+      } catch (err) {
+        alert("Failed to reset engine.");
+      }
+    }
+  };
 
   const resultsArray = data.results || [];
   const latestIssue = resultsArray && resultsArray.length > 0 ? resultsArray[resultsArray.length - 1] : null;
@@ -458,6 +484,14 @@ function Dashboard() {
                <h2 className="text-base font-black text-slate-900">Recent Prediction Logs</h2>
                <p className="text-[11px] font-medium text-slate-400">Last 10 results from the engine</p>
              </div>
+          </div>
+          <div className="flex gap-3">
+            <button onClick={exportCSV} className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-lg transition-colors flex items-center gap-2">
+              <Download className="w-4 h-4" /> Export CSV
+            </button>
+            <button onClick={resetEngine} className="px-4 py-2 bg-rose-100 hover:bg-rose-200 text-rose-700 text-xs font-bold rounded-lg transition-colors flex items-center gap-2">
+              <RotateCcw className="w-4 h-4" /> Reset Engine
+            </button>
           </div>
         </div>
         <div className="overflow-x-auto">

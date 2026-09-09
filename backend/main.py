@@ -57,6 +57,33 @@ def get_loss_streak_stats(logs, type_str, window_size):
         "max": max(runs) if runs else 0
     }
 
+@app.post("/api/reset")
+def reset_engine(timer: str = "30S"):
+    db = next(get_db())
+    
+    # Reset EngineState
+    state = db.query(models.EngineState).filter(models.EngineState.timer_type == timer).first()
+    if state:
+        state.bs_level = 1
+        state.rg_level = 1
+        state.bs_shield_cooldown = 0
+        state.rg_shield_cooldown = 0
+        state.bs_shield_armed = True
+        state.rg_shield_armed = True
+        state.bs_shield_recovery = False
+        state.rg_shield_recovery = False
+        state.gaps = 0
+        state.missed_rounds = 0
+        state.last_issue = None
+        state.fresh_baseline_issue = None
+        
+    # Delete prediction logs and pending prediction for this timer
+    db.query(models.PredictionLog).filter(models.PredictionLog.timer_type == timer).delete()
+    db.query(models.PendingPrediction).filter(models.PendingPrediction.timer_type == timer).delete()
+    
+    db.commit()
+    return {"status": "success", "message": "Engine reset successfully. History preserved."}
+
 @app.get("/api/state")
 def get_engine_state(timer: str = "30S", db: Session = Depends(get_db)):
     results = db.query(models.WinGoResult).filter(models.WinGoResult.timer_type == timer).order_by(models.WinGoResult.issue.desc()).limit(1000).all()
