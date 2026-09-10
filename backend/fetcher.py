@@ -1,5 +1,9 @@
 import time
 import requests
+import urllib.parse
+import json
+import queue
+import concurrent.futures
 import logging
 from sqlalchemy.orm import Session
 from database import SessionLocal
@@ -36,16 +40,61 @@ def next_expected_issue(v):
     except:
         return None
 
+proxy_executor = concurrent.futures.ThreadPoolExecutor(max_workers=20)
+
+def fetch_fastest(target_url):
+    proxies = [
+        {"name": "DIRECT", "url": target_url, "mode": "json"},
+        {"name": "JINA", "url": f"https://r.jina.ai/{target_url}", "mode": "text"},
+        {"name": "ALLORIGINS_RAW", "url": f"https://api.allorigins.win/raw?url={urllib.parse.quote(target_url, safe='')}", "mode": "json"},
+        {"name": "ALLORIGINS_GET", "url": f"https://api.allorigins.win/get?url={urllib.parse.quote(target_url, safe='')}", "mode": "wrapped"},
+        {"name": "CORSPROXY", "url": f"https://corsproxy.io/?url={urllib.parse.quote(target_url, safe='')}", "mode": "json"},
+        {"name": "CODETABS", "url": f"https://api.codetabs.com/v1/proxy?quest={urllib.parse.quote(target_url, safe='')}", "mode": "json"}
+    ]
+    
+    def fetch_proxy(p):
+        headers = {"Accept": "application/json,text/plain,*/*", "User-Agent": "Mozilla/5.0"}
+        res = requests.get(p["url"], headers=headers, timeout=2.2)
+        if res.status_code == 200:
+            if p["mode"] == "wrapped":
+                data = res.json()
+                if "contents" in data:
+                    return json.loads(data["contents"])
+            elif p["mode"] == "text":
+                try:
+                    return res.json()
+                except:
+                    pass
+            else:
+                return res.json()
+        return None
+
+    q = queue.Queue()
+    
+    def worker(p):
+        try:
+            data = fetch_proxy(p)
+            if data and "data" in data and "list" in data["data"] and len(data["data"]["list"]) > 0:
+                q.put(data)
+        except Exception:
+            pass
+            
+    for p in proxies:
+        proxy_executor.submit(worker, p)
+        
+    try:
+        return q.get(timeout=2.5)
+    except queue.Empty:
+        return None
+
 def fetch_and_store_results():
     db = SessionLocal()
     try:
-        for timer_type, url in URLS.items():
+        def fetch_for_timer(timer_type, url):
             target_url = f"{url}?ts={int(time.time()*1000)}"
-            headers = {"Accept": "application/json,text/plain,*/*"}
-            response = requests.get(target_url, headers=headers, timeout=5)
+            data = fetch_fastest(target_url)
             
-            if response.status_code == 200:
-                data = response.json()
+            if data:
                 rows = data.get("data", {}).get("list", [])
                 state = get_or_create_state(db, timer_type)
                 
@@ -181,6 +230,12 @@ def fetch_and_store_results():
                     # Notify all connected WS clients for this timer immediately
                     ws_manager.notify(timer_type, state.last_issue)
 
+        # Run 30S and 1M concurrently as well to halve latency
+        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+            futures = []
+            for timer_type, url in URLS.items():
+                futures.append(executor.submit(fetch_for_timer, timer_type, url))
+            concurrent.futures.wait(futures)
     except Exception as e:
         logger.error(f"Error fetching results: {e}")
     finally:

@@ -8,8 +8,62 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from contextlib import asynccontextmanager
 
 import models, database, fetcher, math_engine, pg_sync
-from database import engine, pg_engine, get_db
+from database import engine, pg_engine, get_db, SessionLocal
 from ws_manager import manager as ws_manager
+
+_analytics_cache = {"30S": {}, "1M": {}}
+
+def refresh_analytics_cache():
+    db = SessionLocal()
+    try:
+        for timer in ["30S", "1M"]:
+            results = db.query(models.WinGoResult).filter(models.WinGoResult.timer_type == timer).order_by(models.WinGoResult.issue.desc()).limit(1000).all()
+            logs = db.query(models.PredictionLog).filter(models.PredictionLog.timer_type == timer).order_by(models.PredictionLog.id.desc()).limit(1000).all()
+            
+            windows = [100, 200, 300, 500, 1000, 999999]
+            loss_stats = {
+                "bs": [get_loss_streak_stats(logs, "bs", w) for w in windows],
+                "rg": [get_loss_streak_stats(logs, "rg", w) for w in windows]
+            }
+            
+            all_nums = [r.num for r in reversed(results)]
+            bs_regime = math_engine.bs_regime(all_nums[-300:]) if all_nums else "BUILDING"
+            rg_regime = math_engine.rg_regime(all_nums[-300:]) if all_nums else "BUILDING"
+            
+            bs_wfa = math_engine.bs_wfa(all_nums[-300:])
+            rg_wfa = math_engine.rg_wfa(all_nums[-300:])
+            
+            bs_logs = [x for x in logs if x.bs_status in ('WIN', 'LOSS')]
+            rg_logs = [x for x in logs if x.rg_status in ('WIN', 'LOSS')]
+            both_logs = [x for x in logs if x.bs_status in ('WIN', 'LOSS') and x.rg_status in ('WIN', 'LOSS')]
+            
+            bs_acc = (sum(1 for x in bs_logs if x.bs_status == 'WIN') / len(bs_logs)) if bs_logs else 0
+            rg_acc = (sum(1 for x in rg_logs if x.rg_status == 'WIN') / len(rg_logs)) if rg_logs else 0
+            dual_acc = (sum(1 for x in both_logs if x.bs_status == 'WIN' and x.rg_status == 'WIN') / len(both_logs)) if both_logs else 0
+            
+            state = db.query(models.EngineState).filter(models.EngineState.timer_type == timer).first()
+            
+            monitor_stats = {
+                "totalVerified": len(results),
+                "bsAcc": bs_acc,
+                "rgAcc": rg_acc,
+                "dualAcc": dual_acc,
+                "bsRegime": bs_regime,
+                "rgRegime": rg_regime,
+                "gaps": state.gaps if state else 0,
+                "missedRounds": state.missed_rounds if state else 0,
+                "bsWfa": bs_wfa,
+                "rgWfa": rg_wfa
+            }
+            
+            _analytics_cache[timer] = {
+                "lossStats": loss_stats,
+                "monitorStats": monitor_stats
+            }
+    except Exception as e:
+        print(f"Error refreshing analytics cache: {e}")
+    finally:
+        db.close()
 
 models.Base.metadata.create_all(bind=engine)
 if pg_engine:
@@ -22,8 +76,13 @@ async def lifespan(app: FastAPI):
     # Give the WS manager access to the running event loop so the
     # synchronous fetcher thread can schedule async broadcasts.
     ws_manager.set_loop(asyncio.get_running_loop())
-    scheduler.add_job(fetcher.fetch_and_store_results, 'interval', seconds=2)
+    
+    # Initialize cache synchronously before starting
+    refresh_analytics_cache()
+    
+    scheduler.add_job(fetcher.fetch_and_store_results, 'interval', seconds=1)
     scheduler.add_job(pg_sync.sync_to_postgres, 'interval', seconds=300)
+    scheduler.add_job(refresh_analytics_cache, 'interval', seconds=30)
     scheduler.start()
     yield
     scheduler.shutdown()
@@ -153,42 +212,20 @@ def get_engine_state(timer: str = "30S", db: Session = Depends(get_db)):
             "rgScoreV": round(rg_base_res.get("scores", [0,0,0])[2], 1)
         }
         
-    logs = db.query(models.PredictionLog).filter(models.PredictionLog.timer_type == timer).order_by(models.PredictionLog.id.desc()).limit(1000).all()
+    logs = db.query(models.PredictionLog).filter(models.PredictionLog.timer_type == timer).order_by(models.PredictionLog.id.desc()).limit(180).all()
     
-    windows = [100, 200, 300, 500, 1000, 999999]
-    loss_stats = {
-        "bs": [get_loss_streak_stats(logs, "bs", w) for w in windows],
-        "rg": [get_loss_streak_stats(logs, "rg", w) for w in windows]
-    }
+    cached = _analytics_cache.get(timer, {})
+    loss_stats = cached.get("lossStats")
+    monitor_stats = cached.get("monitorStats")
     
-    # Compute accuracy & regimes
-    all_nums = [r.num for r in reversed(results)]
-    bs_regime = math_engine.bs_regime(all_nums[-300:]) if all_nums else "BUILDING"
-    rg_regime = math_engine.rg_regime(all_nums[-300:]) if all_nums else "BUILDING"
-    
-    bs_wfa = math_engine.bs_wfa(all_nums[-300:])
-    rg_wfa = math_engine.rg_wfa(all_nums[-300:])
-    
-    bs_logs = [x for x in logs if x.bs_status in ('WIN', 'LOSS')]
-    rg_logs = [x for x in logs if x.rg_status in ('WIN', 'LOSS')]
-    both_logs = [x for x in logs if x.bs_status in ('WIN', 'LOSS') and x.rg_status in ('WIN', 'LOSS')]
-    
-    bs_acc = (sum(1 for x in bs_logs if x.bs_status == 'WIN') / len(bs_logs)) if bs_logs else 0
-    rg_acc = (sum(1 for x in rg_logs if x.rg_status == 'WIN') / len(rg_logs)) if rg_logs else 0
-    dual_acc = (sum(1 for x in both_logs if x.bs_status == 'WIN' and x.rg_status == 'WIN') / len(both_logs)) if both_logs else 0
-    
-    monitor_stats = {
-        "totalVerified": len(results_list),
-        "bsAcc": bs_acc,
-        "rgAcc": rg_acc,
-        "dualAcc": dual_acc,
-        "bsRegime": bs_regime,
-        "rgRegime": rg_regime,
-        "gaps": state.gaps if state else 0,
-        "missedRounds": state.missed_rounds if state else 0,
-        "bsWfa": bs_wfa,
-        "rgWfa": rg_wfa
-    }
+    # Fallback if cache is empty for some reason
+    if not loss_stats or not monitor_stats:
+        loss_stats = {"bs": [], "rg": []}
+        monitor_stats = {
+            "totalVerified": len(results_list), "bsAcc": 0, "rgAcc": 0, "dualAcc": 0,
+            "bsRegime": "BUILDING", "rgRegime": "BUILDING", "gaps": 0, "missedRounds": 0,
+            "bsWfa": {}, "rgWfa": {}
+        }
     
     logs_list = [{
         "period": l.period,
