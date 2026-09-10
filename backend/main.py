@@ -7,11 +7,13 @@ from sqlalchemy.orm import Session
 from apscheduler.schedulers.background import BackgroundScheduler
 from contextlib import asynccontextmanager
 
-import models, database, fetcher, math_engine
-from database import engine, get_db
+import models, database, fetcher, math_engine, pg_sync
+from database import engine, pg_engine, get_db
 from ws_manager import manager as ws_manager
 
 models.Base.metadata.create_all(bind=engine)
+if pg_engine:
+    models.Base.metadata.create_all(bind=pg_engine)
 
 scheduler = BackgroundScheduler()
 
@@ -21,6 +23,7 @@ async def lifespan(app: FastAPI):
     # synchronous fetcher thread can schedule async broadcasts.
     ws_manager.set_loop(asyncio.get_running_loop())
     scheduler.add_job(fetcher.fetch_and_store_results, 'interval', seconds=2)
+    scheduler.add_job(pg_sync.sync_to_postgres, 'interval', seconds=300)
     scheduler.start()
     yield
     scheduler.shutdown()
@@ -61,6 +64,11 @@ def get_loss_streak_stats(logs, type_str, window_size):
         "counts": counts,
         "max": max(runs) if runs else 0
     }
+
+import time
+@app.get("/api/ping")
+def ping():
+    return {"status": "ok", "time": int(time.time() * 1000)}
 
 @app.post("/api/reset")
 def reset_engine(timer: str = "30S"):

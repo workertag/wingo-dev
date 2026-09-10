@@ -59,3 +59,10 @@ class PendingPrediction(Base):
     rg_quality = Column(String)
     created_at = Column(BigInteger)
 
+class SyncQueue(Base):
+    __tablename__ = "sync_queue"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    table_name = Column(String, index=True)    # "wingo_results", "prediction_logs", etc.
+    operation = Column(String)                 # "INSERT", "UPDATE", "DELETE"
+    record_data = Column(String)               # JSON-serialized row data
+    created_at = Column(BigInteger)

@@ -47,6 +47,18 @@ function Dashboard() {
   const [timerLeft, setTimerLeft] = useState("--");
   const [feedOk, setFeedOk] = useState(false);
   const [activeTab, setActiveTab] = useState("30S");
+  const [pingLatency, setPingLatency] = useState<number | null>(null);
+
+  const testPing = async () => {
+    const start = performance.now();
+    try {
+      await fetch('/api/ping');
+      const end = performance.now();
+      setPingLatency(Math.round(end - start));
+    } catch (e) {
+      setPingLatency(-1);
+    }
+  };
 
   useEffect(() => {
     let fallbackInterval: ReturnType<typeof setInterval>;
@@ -188,6 +200,9 @@ function Dashboard() {
             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             <span className="text-xs font-bold text-emerald-700">System Online</span>
             <span className="text-[10px] text-emerald-600/70 ml-1">Real-time Analysis</span>
+            <button onClick={testPing} className="ml-2 px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full text-[10px] font-bold hover:bg-emerald-200 transition-colors flex items-center gap-1">
+              Test Latency {pingLatency !== null ? (pingLatency === -1 ? '(Error)' : `(${(pingLatency / 1000).toFixed(3)}s)`) : ""}
+            </button>
           </div>
         </div>
 
