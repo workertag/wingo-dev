@@ -11,7 +11,9 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
+import { Route as EarningsRouteImport } from './routes/earnings'
 import { Route as HistoryRouteImport } from './routes/history'
+import { Route as HourlyPnlRouteImport } from './routes/hourly-pnl'
 import { Route as SettingsRouteImport } from './routes/settings'
 
 const IndexRoute = IndexRouteImport.update({
@@ -24,9 +26,19 @@ const AnalyticsRoute = AnalyticsRouteImport.update({
   path: '/analytics',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EarningsRoute = EarningsRouteImport.update({
+  id: '/earnings',
+  path: '/earnings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const HistoryRoute = HistoryRouteImport.update({
   id: '/history',
   path: '/history',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HourlyPnlRoute = HourlyPnlRouteImport.update({
+  id: '/hourly-pnl',
+  path: '/hourly-pnl',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsRoute = SettingsRouteImport.update({
@@ -38,34 +50,51 @@ const SettingsRoute = SettingsRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
+  '/earnings': typeof EarningsRoute
   '/history': typeof HistoryRoute
+  '/hourly-pnl': typeof HourlyPnlRoute
   '/settings': typeof SettingsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
+  '/earnings': typeof EarningsRoute
   '/history': typeof HistoryRoute
+  '/hourly-pnl': typeof HourlyPnlRoute
   '/settings': typeof SettingsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
+  '/earnings': typeof EarningsRoute
   '/history': typeof HistoryRoute
+  '/hourly-pnl': typeof HourlyPnlRoute
   '/settings': typeof SettingsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/analytics' | '/history' | '/settings'
+  fullPaths:
+    '/' | '/analytics' | '/earnings' | '/history' | '/hourly-pnl' | '/settings'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/analytics' | '/history' | '/settings'
-  id: '__root__' | '/' | '/analytics' | '/history' | '/settings'
+  to:
+    '/' | '/analytics' | '/earnings' | '/history' | '/hourly-pnl' | '/settings'
+  id:
+    | '__root__'
+    | '/'
+    | '/analytics'
+    | '/earnings'
+    | '/history'
+    | '/hourly-pnl'
+    | '/settings'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AnalyticsRoute: typeof AnalyticsRoute
+  EarningsRoute: typeof EarningsRoute
   HistoryRoute: typeof HistoryRoute
+  HourlyPnlRoute: typeof HourlyPnlRoute
   SettingsRoute: typeof SettingsRoute
 }
 
@@ -85,11 +114,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AnalyticsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/earnings': {
+      id: '/earnings'
+      path: '/earnings'
+      fullPath: '/earnings'
+      preLoaderRoute: typeof EarningsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/history': {
       id: '/history'
       path: '/history'
       fullPath: '/history'
       preLoaderRoute: typeof HistoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/hourly-pnl': {
+      id: '/hourly-pnl'
+      path: '/hourly-pnl'
+      fullPath: '/hourly-pnl'
+      preLoaderRoute: typeof HourlyPnlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings': {
@@ -105,7 +148,9 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AnalyticsRoute: AnalyticsRoute,
+  EarningsRoute: EarningsRoute,
   HistoryRoute: HistoryRoute,
+  HourlyPnlRoute: HourlyPnlRoute,
   SettingsRoute: SettingsRoute,
 }
 export const routeTree = rootRouteImport

@@ -38,6 +38,18 @@ export const adminMenuItems: MenuItem[] = [
     path: "/analytics",
   },
   {
+    id: "hourly-pnl",
+    label: "Hourly P&L",
+    icon: Clock,
+    path: "/hourly-pnl",
+  },
+  {
+    id: "earnings",
+    label: "Earnings",
+    icon: Target,
+    path: "/earnings",
+  },
+  {
     id: "settings",
     label: "Settings",
     icon: Settings,

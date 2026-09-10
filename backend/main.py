@@ -344,3 +344,117 @@ def get_hourly_accuracy(timer: str = "30S", db: Session = Depends(get_db)):
         })
         
     return result
+
+@app.get("/api/hourly-pnl")
+def get_hourly_pnl(timer: str = "30S", db: Session = Depends(get_db)):
+    base_logs = db.query(models.PredictionLog).filter(models.PredictionLog.timer_type == timer).order_by(models.PredictionLog.id.desc()).all()
+    
+    hours_logs = defaultdict(list)
+    for l in base_logs:
+        if not l.time: continue
+        hour = datetime.fromtimestamp(l.time / 1000).hour
+        hours_logs[hour].append(l)
+    
+    result = []
+    for h in range(24):
+        logs_for_hour = hours_logs.get(h, [])
+        stats = calc_stats(logs_for_hour)
+        result.append({
+            "hour": f"{h:02d}:00",
+            "bsWins": sum(1 for l in logs_for_hour if l.bs_status == 'WIN'),
+            "bsLosses": sum(1 for l in logs_for_hour if l.bs_status == 'LOSS'),
+            "rgWins": sum(1 for l in logs_for_hour if l.rg_status == 'WIN'),
+            "rgLosses": sum(1 for l in logs_for_hour if l.rg_status == 'LOSS'),
+            "bsProfit": stats["bsProfit"],
+            "rgProfit": stats["rgProfit"],
+            "totalProfit": stats["totalProfit"],
+            "samples": len(logs_for_hour)
+        })
+        
+    return result
+
+@app.get("/api/earning-history")
+def get_earning_history(timer: str = "30S", page: int = 1, limit: int = 50, db: Session = Depends(get_db)):
+    offset = (page - 1) * limit
+    total = db.query(models.PredictionLog).filter(models.PredictionLog.timer_type == timer).count()
+    
+    # Fetch all logs ascending to compute running total accurately
+    all_logs = db.query(models.PredictionLog).filter(models.PredictionLog.timer_type == timer).order_by(models.PredictionLog.id.asc()).all()
+    
+    bs_current_level = 1
+    rg_current_level = 1
+    running_total = 0
+    
+    bs_wins = 0
+    rg_wins = 0
+    
+    enriched_logs = []
+    for l in all_logs:
+        bs_bet = 0
+        bs_pnl = 0
+        if l.bs_status in ['WIN', 'LOSS']:
+            bs_bet = 2 ** (bs_current_level - 1)
+            if l.bs_status == 'WIN':
+                bs_pnl = bs_bet
+                bs_current_level = 1
+                bs_wins += 1
+            elif l.bs_status == 'LOSS':
+                bs_pnl = -bs_bet
+                bs_current_level = min(12, bs_current_level + 1)
+                
+        rg_bet = 0
+        rg_pnl = 0
+        if l.rg_status in ['WIN', 'LOSS']:
+            rg_bet = 2 ** (rg_current_level - 1)
+            if l.rg_status == 'WIN':
+                rg_pnl = rg_bet
+                rg_current_level = 1
+                rg_wins += 1
+            elif l.rg_status == 'LOSS':
+                rg_pnl = -rg_bet
+                rg_current_level = min(12, rg_current_level + 1)
+                
+        game_pnl = bs_pnl + rg_pnl
+        running_total += game_pnl
+        
+        enriched_logs.append({
+            "period": l.period,
+            "time": l.time,
+            "bsPred": l.bs_pred,
+            "rgPred": l.rg_pred,
+            "bsStatus": l.bs_status,
+            "rgStatus": l.rg_status,
+            "bsBet": bs_bet,
+            "rgBet": rg_bet,
+            "bsPnl": bs_pnl,
+            "rgPnl": rg_pnl,
+            "gamePnl": game_pnl,
+            "runningTotal": running_total,
+            "num": l.num,
+            "actualColour": l.actual_colour,
+            "bsLayer": l.bs_layer,
+            "rgLayer": l.rg_layer,
+        })
+        
+    enriched_logs.reverse()
+    paginated_logs = enriched_logs[offset:offset + limit]
+    
+    total_played_bs = sum(1 for x in all_logs if x.bs_status in ['WIN', 'LOSS'])
+    total_played_rg = sum(1 for x in all_logs if x.rg_status in ['WIN', 'LOSS'])
+    
+    bs_win_rate = (bs_wins / total_played_bs * 100) if total_played_bs > 0 else 0
+    rg_win_rate = (rg_wins / total_played_rg * 100) if total_played_rg > 0 else 0
+    
+    return {
+        "data": paginated_logs,
+        "total": total,
+        "page": page,
+        "limit": limit,
+        "totalPages": (total + limit - 1) // limit,
+        "summary": {
+            "runningTotal": running_total,
+            "totalGames": total,
+            "bsWinRate": bs_win_rate,
+            "rgWinRate": rg_win_rate
+        }
+    }
