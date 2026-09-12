@@ -4,6 +4,8 @@ from datetime import datetime
 from collections import defaultdict
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
+from pydantic import BaseModel
+import os
 from apscheduler.schedulers.background import BackgroundScheduler
 from contextlib import asynccontextmanager
 
@@ -117,7 +119,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-def get_loss_streak_stats(logs, type_str, window_size):
+class LoginRequest(BaseModel):
+    password: str
+
+@app.post("/api/auth/login")
+def login(req: LoginRequest):
+    admin_password = os.getenv("ADMIN_PASSWORD", "wingo_admin")
+    if req.password == admin_password:
+        return {"success": True}
+    return {"success": False, "message": "Invalid password"}
+
+def get_loss_streak_stats(logs, type_str: str, window_size: int = 100):
     ev = [x for x in logs if getattr(x, f"{type_str}_status") in ('WIN', 'LOSS')][:window_size]
     runs = []
     r = 0

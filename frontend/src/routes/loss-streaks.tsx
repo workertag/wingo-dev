@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { Zap, RefreshCcw, TrendingDown } from "lucide-react";
+import { LoginScreen } from "@/components/LoginScreen";
 
 export const Route = createFileRoute("/loss-streaks")({
   component: LossStreaksPage,
@@ -52,6 +53,7 @@ function LossStreaksPage() {
   const rgAll = getStats("rg");
 
   return (
+    <LoginScreen>
     <div className="px-6 sm:px-8 pb-12 max-w-[1400px] mx-auto space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 pb-6 border-b border-slate-200/60 mt-4">
         <div className="flex items-center gap-3">
@@ -219,5 +221,6 @@ function LossStreaksPage() {
         </>
       )}
     </div>
+    </LoginScreen>
   );
 }
