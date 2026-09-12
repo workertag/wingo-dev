@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
-import { Zap, RefreshCcw, TrendingDown } from "lucide-react";
+import { Zap, RefreshCcw, TrendingDown, X, Calendar, Clock } from "lucide-react";
 import { LoginScreen } from "@/components/LoginScreen";
 
 export const Route = createFileRoute("/loss-streaks")({
@@ -16,6 +16,29 @@ function LossStreaksPage() {
   const [data, setData] = useState<any>(null);
   const [activeTab, setActiveTab] = useState("30S");
   const [loading, setLoading] = useState(true);
+
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalData, setModalData] = useState<any>(null);
+
+  const openModal = (streak: number, engine: string, windowLabel: string, times: number[]) => {
+    if (!times || times.length === 0) return;
+    times.sort((a, b) => b - a); // newest first
+    setModalData({ streak, engine, windowLabel, times });
+    setModalOpen(true);
+  };
+
+  const formatTime = (ts: number) => {
+    if (!ts) return "—";
+    const d = new Date(ts);
+    return d.toLocaleString('en-GB', {
+      weekday: 'short',
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
 
   const fetchStreaks = async (tab: string) => {
     setLoading(true);
@@ -178,31 +201,53 @@ function LossStreaksPage() {
                       </td>
                       {windows.map((w, i) => {
                         let count = 0;
-                        if (data.bs && data.bs[w] && data.bs[w].counts) {
+                        let times: number[] = [];
+                        if (data.bs && data.bs[w] && data.bs[w].times) {
                            if (streakLen === 15) {
-                             count = Object.entries(data.bs[w].counts).filter(([k,v]) => Number(k) >= 15).reduce((acc, [k,v]:any) => acc + v, 0);
+                             times = Object.entries(data.bs[w].times)
+                               .filter(([k,v]) => Number(k) >= 15)
+                               .flatMap(([k,v]: any) => v);
                            } else {
-                             count = data.bs[w].counts[streakLen] || 0;
+                             times = data.bs[w].times[streakLen] || [];
                            }
+                           count = times.length;
                         }
                         return (
                           <td key={`bs-${w}-${streakLen}`} className={`py-3.5 px-2 text-xs font-medium border-l border-slate-50 ${count > 0 ? 'text-slate-700' : 'text-slate-300'}`}>
-                            {count}
+                            {count > 0 ? (
+                              <button
+                                onClick={() => openModal(streakLen, 'Big/Small', windowLabels[i], times)}
+                                className="w-full h-full hover:bg-slate-100 hover:text-indigo-600 rounded cursor-pointer transition-colors px-2 py-1"
+                              >
+                                {count}
+                              </button>
+                            ) : count}
                           </td>
                         );
                       })}
                       {windows.map((w, i) => {
                         let count = 0;
-                        if (data.rg && data.rg[w] && data.rg[w].counts) {
+                        let times: number[] = [];
+                        if (data.rg && data.rg[w] && data.rg[w].times) {
                            if (streakLen === 15) {
-                             count = Object.entries(data.rg[w].counts).filter(([k,v]) => Number(k) >= 15).reduce((acc, [k,v]:any) => acc + v, 0);
+                             times = Object.entries(data.rg[w].times)
+                               .filter(([k,v]) => Number(k) >= 15)
+                               .flatMap(([k,v]: any) => v);
                            } else {
-                             count = data.rg[w].counts[streakLen] || 0;
+                             times = data.rg[w].times[streakLen] || [];
                            }
+                           count = times.length;
                         }
                         return (
                           <td key={`rg-${w}-${streakLen}`} className={`py-3.5 px-2 text-xs font-medium ${i === 0 ? 'border-l border-slate-100' : 'border-l border-slate-50'} ${count > 0 ? 'text-slate-700' : 'text-slate-300'}`}>
-                            {count}
+                            {count > 0 ? (
+                              <button
+                                onClick={() => openModal(streakLen, 'Red/Green', windowLabels[i], times)}
+                                className="w-full h-full hover:bg-slate-100 hover:text-emerald-600 rounded cursor-pointer transition-colors px-2 py-1"
+                              >
+                                {count}
+                              </button>
+                            ) : count}
                           </td>
                         );
                       })}
@@ -219,6 +264,53 @@ function LossStreaksPage() {
             </p>
           </div>
         </>
+      )}
+
+      {/* Modal */}
+      {modalOpen && modalData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 w-full max-w-md overflow-hidden flex flex-col max-h-[85vh]">
+            <div className="p-5 sm:p-6 border-b border-slate-100 flex items-start justify-between bg-slate-50/50">
+              <div>
+                <h3 className="text-lg font-black text-slate-800 tracking-tight flex items-center gap-2">
+                  <Calendar className="w-5 h-5 text-indigo-500" />
+                  {modalData.streak === 15 ? '15+' : modalData.streak}-Loss Streak Timing
+                </h3>
+                <p className="text-xs font-bold text-slate-400 mt-1 uppercase tracking-widest">
+                  {modalData.engine} • Window: {modalData.windowLabel}
+                </p>
+              </div>
+              <button 
+                onClick={() => setModalOpen(false)}
+                className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-200/50 rounded-full transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="p-5 sm:p-6 overflow-y-auto bg-white flex-1">
+              <div className="space-y-3">
+                {modalData.times.map((ts: number, idx: number) => (
+                  <div key={idx} className="flex items-center justify-between p-3.5 rounded-xl border border-slate-100 hover:border-indigo-100 hover:bg-indigo-50/30 transition-colors group">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center border border-slate-100 group-hover:bg-white group-hover:border-indigo-100 transition-colors">
+                        <Clock className="w-4 h-4 text-slate-400 group-hover:text-indigo-400 transition-colors" />
+                      </div>
+                      <span className="text-sm font-bold text-slate-700">{formatTime(ts)}</span>
+                    </div>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase">Occurrence {modalData.times.length - idx}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            <div className="p-4 border-t border-slate-100 bg-slate-50 text-center">
+              <p className="text-xs font-semibold text-slate-500">
+                Found {modalData.times.length} instance{modalData.times.length !== 1 ? 's' : ''} of this streak.
+              </p>
+            </div>
+          </div>
+        </div>
       )}
     </div>
     </LoginScreen>

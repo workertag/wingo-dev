@@ -132,27 +132,35 @@ def login(req: LoginRequest):
 def get_loss_streak_stats(logs, type_str: str, window_size: int = 100):
     ev = [x for x in logs if getattr(x, f"{type_str}_status") in ('WIN', 'LOSS')][:window_size]
     runs = []
+    times = defaultdict(list)
     r = 0
+    last_loss_time = None
+    
     for x in reversed(ev):
-        st = getattr(x, f"{type_str}_status")
-        if st == 'LOSS':
+        status = getattr(x, f"{type_str}_status")
+        if status == 'LOSS':
             r += 1
-        elif st == 'WIN':
+            last_loss_time = getattr(x, 'time', None)
+        else:
             if r > 0:
                 runs.append(r)
+                if last_loss_time:
+                    times[r].append(last_loss_time)
                 r = 0
     if r > 0:
         runs.append(r)
-    
-    counts = {}
-    for n in runs:
-        counts[n] = counts.get(n, 0) + 1
+        if last_loss_time:
+            times[r].append(last_loss_time)
         
+    counts = defaultdict(int)
+    for r in runs: counts[r] += 1
+    
     return {
         "n": len(ev),
         "losses": sum(1 for x in ev if getattr(x, f"{type_str}_status") == 'LOSS'),
         "runs": runs,
-        "counts": counts,
+        "counts": dict(counts),
+        "times": dict(times),
         "max": max(runs) if runs else 0
     }
 
