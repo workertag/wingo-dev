@@ -117,8 +117,8 @@ function Dashboard() {
     fetchState();
     connectWs();
 
-    // 30s fallback poll in case WS is down
-    fallbackInterval = setInterval(fetchState, 30000);
+    // 5s fallback poll in case WS is down
+    fallbackInterval = setInterval(fetchState, 5000);
 
     // Instantly fetch and reconnect when switching back to the app on mobile
     const handleVisibilityChange = () => {
