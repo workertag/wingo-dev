@@ -17,6 +17,11 @@ import { Route as HourlyPnlRouteImport } from './routes/hourly-pnl'
 import { Route as LossStreaksRouteImport } from './routes/loss-streaks'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as StreakTimingsRouteImport } from './routes/streak-timings'
+import { Route as PatternHeatmapRouteImport } from './routes/pattern/heatmap'
+import { Route as PatternHotColdRouteImport } from './routes/pattern/hot-cold'
+import { Route as PatternRecoveryRouteImport } from './routes/pattern/recovery'
+import { Route as PatternSequencesRouteImport } from './routes/pattern/sequences'
+import { Route as PatternWinStreaksRouteImport } from './routes/pattern/win-streaks'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -58,6 +63,31 @@ const StreakTimingsRoute = StreakTimingsRouteImport.update({
   path: '/streak-timings',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PatternHeatmapRoute = PatternHeatmapRouteImport.update({
+  id: '/pattern/heatmap',
+  path: '/pattern/heatmap',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PatternHotColdRoute = PatternHotColdRouteImport.update({
+  id: '/pattern/hot-cold',
+  path: '/pattern/hot-cold',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PatternRecoveryRoute = PatternRecoveryRouteImport.update({
+  id: '/pattern/recovery',
+  path: '/pattern/recovery',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PatternSequencesRoute = PatternSequencesRouteImport.update({
+  id: '/pattern/sequences',
+  path: '/pattern/sequences',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PatternWinStreaksRoute = PatternWinStreaksRouteImport.update({
+  id: '/pattern/win-streaks',
+  path: '/pattern/win-streaks',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -68,6 +98,11 @@ export interface FileRoutesByFullPath {
   '/loss-streaks': typeof LossStreaksRoute
   '/settings': typeof SettingsRoute
   '/streak-timings': typeof StreakTimingsRoute
+  '/pattern/heatmap': typeof PatternHeatmapRoute
+  '/pattern/hot-cold': typeof PatternHotColdRoute
+  '/pattern/recovery': typeof PatternRecoveryRoute
+  '/pattern/sequences': typeof PatternSequencesRoute
+  '/pattern/win-streaks': typeof PatternWinStreaksRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -78,6 +113,11 @@ export interface FileRoutesByTo {
   '/loss-streaks': typeof LossStreaksRoute
   '/settings': typeof SettingsRoute
   '/streak-timings': typeof StreakTimingsRoute
+  '/pattern/heatmap': typeof PatternHeatmapRoute
+  '/pattern/hot-cold': typeof PatternHotColdRoute
+  '/pattern/recovery': typeof PatternRecoveryRoute
+  '/pattern/sequences': typeof PatternSequencesRoute
+  '/pattern/win-streaks': typeof PatternWinStreaksRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -89,6 +129,11 @@ export interface FileRoutesById {
   '/loss-streaks': typeof LossStreaksRoute
   '/settings': typeof SettingsRoute
   '/streak-timings': typeof StreakTimingsRoute
+  '/pattern/heatmap': typeof PatternHeatmapRoute
+  '/pattern/hot-cold': typeof PatternHotColdRoute
+  '/pattern/recovery': typeof PatternRecoveryRoute
+  '/pattern/sequences': typeof PatternSequencesRoute
+  '/pattern/win-streaks': typeof PatternWinStreaksRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -101,6 +146,11 @@ export interface FileRouteTypes {
     | '/loss-streaks'
     | '/settings'
     | '/streak-timings'
+    | '/pattern/heatmap'
+    | '/pattern/hot-cold'
+    | '/pattern/recovery'
+    | '/pattern/sequences'
+    | '/pattern/win-streaks'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -111,6 +161,11 @@ export interface FileRouteTypes {
     | '/loss-streaks'
     | '/settings'
     | '/streak-timings'
+    | '/pattern/heatmap'
+    | '/pattern/hot-cold'
+    | '/pattern/recovery'
+    | '/pattern/sequences'
+    | '/pattern/win-streaks'
   id:
     | '__root__'
     | '/'
@@ -121,6 +176,11 @@ export interface FileRouteTypes {
     | '/loss-streaks'
     | '/settings'
     | '/streak-timings'
+    | '/pattern/heatmap'
+    | '/pattern/hot-cold'
+    | '/pattern/recovery'
+    | '/pattern/sequences'
+    | '/pattern/win-streaks'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -132,6 +192,11 @@ export interface RootRouteChildren {
   LossStreaksRoute: typeof LossStreaksRoute
   SettingsRoute: typeof SettingsRoute
   StreakTimingsRoute: typeof StreakTimingsRoute
+  PatternHeatmapRoute: typeof PatternHeatmapRoute
+  PatternHotColdRoute: typeof PatternHotColdRoute
+  PatternRecoveryRoute: typeof PatternRecoveryRoute
+  PatternSequencesRoute: typeof PatternSequencesRoute
+  PatternWinStreaksRoute: typeof PatternWinStreaksRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -192,6 +257,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StreakTimingsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pattern/heatmap': {
+      id: '/pattern/heatmap'
+      path: '/pattern/heatmap'
+      fullPath: '/pattern/heatmap'
+      preLoaderRoute: typeof PatternHeatmapRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pattern/hot-cold': {
+      id: '/pattern/hot-cold'
+      path: '/pattern/hot-cold'
+      fullPath: '/pattern/hot-cold'
+      preLoaderRoute: typeof PatternHotColdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pattern/recovery': {
+      id: '/pattern/recovery'
+      path: '/pattern/recovery'
+      fullPath: '/pattern/recovery'
+      preLoaderRoute: typeof PatternRecoveryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pattern/sequences': {
+      id: '/pattern/sequences'
+      path: '/pattern/sequences'
+      fullPath: '/pattern/sequences'
+      preLoaderRoute: typeof PatternSequencesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pattern/win-streaks': {
+      id: '/pattern/win-streaks'
+      path: '/pattern/win-streaks'
+      fullPath: '/pattern/win-streaks'
+      preLoaderRoute: typeof PatternWinStreaksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -204,6 +304,11 @@ const rootRouteChildren: RootRouteChildren = {
   LossStreaksRoute: LossStreaksRoute,
   SettingsRoute: SettingsRoute,
   StreakTimingsRoute: StreakTimingsRoute,
+  PatternHeatmapRoute: PatternHeatmapRoute,
+  PatternHotColdRoute: PatternHotColdRoute,
+  PatternRecoveryRoute: PatternRecoveryRoute,
+  PatternSequencesRoute: PatternSequencesRoute,
+  PatternWinStreaksRoute: PatternWinStreaksRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

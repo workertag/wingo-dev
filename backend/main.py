@@ -9,7 +9,7 @@ import os
 from apscheduler.schedulers.background import BackgroundScheduler
 from contextlib import asynccontextmanager
 
-import models, database, fetcher, math_engine, pg_sync
+import models, database, fetcher, math_engine, pg_sync, analytics_advanced
 from database import engine, pg_engine, get_db, SessionLocal
 from ws_manager import manager as ws_manager
 
@@ -97,9 +97,13 @@ async def lifespan(app: FastAPI):
     # synchronous fetcher thread can schedule async broadcasts.
     ws_manager.set_loop(asyncio.get_running_loop())
     
-    # Initialize cache synchronously before starting
+    scheduler.add_job(analytics_advanced.refresh_advanced_cache, 'interval', seconds=60, max_instances=1)
+    
+    # Run initially
+    fetcher.refresh_history_cache()
     refresh_analytics_cache()
     refresh_streak_cache()
+    analytics_advanced.refresh_advanced_cache()
     
     scheduler.add_job(fetcher.fetch_and_store_results, 'interval', seconds=1)
     scheduler.add_job(pg_sync.sync_to_postgres, 'interval', seconds=300)
@@ -295,8 +299,13 @@ def get_engine_state(timer: str = "30S", db: Session = Depends(get_db)):
     }
 
 @app.get("/api/loss-streaks")
-def get_loss_streaks(timer: str = "30S"):
+def get_loss_streaks_api(timer: str = "30S"):
     return _streak_cache.get(timer, {})
+
+@app.get("/api/advanced-analytics")
+def get_advanced_analytics_api(timer: str = "30S"):
+    with analytics_advanced._analytics_lock:
+        return analytics_advanced._advanced_cache.get(timer, {})
 
 @app.get("/api/history")
 def get_history(timer: str = "30S", page: int = 1, limit: int = 50, db: Session = Depends(get_db)):

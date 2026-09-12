@@ -7,6 +7,11 @@ import {
   Clock,
   TrendingDown,
   Calendar,
+  Grid,
+  GitMerge,
+  RotateCcw,
+  Hash,
+  TrendingUp,
 } from "lucide-react";
 import type { ComponentType } from "react";
 
@@ -66,6 +71,43 @@ export const adminMenuItems: MenuItem[] = [
     label: "Streak Timings",
     icon: Calendar,
     path: "/streak-timings",
+  },
+  {
+    id: "pattern-lab",
+    label: "Pattern Lab",
+    icon: Grid,
+    children: [
+      {
+        id: "pattern-heatmap",
+        label: "Profit Heatmap",
+        icon: Grid,
+        path: "/pattern/heatmap",
+      },
+      {
+        id: "pattern-sequences",
+        label: "Sequence Detection",
+        icon: GitMerge,
+        path: "/pattern/sequences",
+      },
+      {
+        id: "pattern-recovery",
+        label: "Recovery Rate",
+        icon: RotateCcw,
+        path: "/pattern/recovery",
+      },
+      {
+        id: "pattern-hot-cold",
+        label: "Hot & Cold Numbers",
+        icon: Hash,
+        path: "/pattern/hot-cold",
+      },
+      {
+        id: "pattern-win-streaks",
+        label: "Win Streaks",
+        icon: TrendingUp,
+        path: "/pattern/win-streaks",
+      },
+    ]
   },
   {
     id: "settings",
