@@ -40,12 +40,7 @@ export const publicMenuItems: MenuItem[] = [
 
 export const adminMenuItems: MenuItem[] = [
   ...publicMenuItems,
-  {
-    id: "analytics",
-    label: "Analytics",
-    icon: Activity,
-    path: "/analytics",
-  },
+
   {
     id: "hourly-pnl",
     label: "Hourly P&L",

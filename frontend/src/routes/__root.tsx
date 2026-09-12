@@ -14,8 +14,8 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 
 function RootLayout() {
   const location = useLocation();
-  const isAdminRoute = location.pathname !== "/" && location.pathname !== "/history";
-  const menuItems = isAdminRoute ? adminMenuItems : publicMenuItems;
+  const isPublicRoute = location.pathname === "/" || location.pathname === "/history" || location.pathname === "/analytics";
+  const menuItems = isPublicRoute ? publicMenuItems : adminMenuItems;
 
   return (
     <BaseLayout menuItems={menuItems}>
