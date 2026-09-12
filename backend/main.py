@@ -12,7 +12,7 @@ from database import engine, pg_engine, get_db, SessionLocal
 from ws_manager import manager as ws_manager
 
 _analytics_cache = {"30S": {}, "1M": {}}
-
+_streak_cache = {"30S": {}, "1M": {}}
 def refresh_analytics_cache():
     db = SessionLocal()
     try:
@@ -65,6 +65,24 @@ def refresh_analytics_cache():
     finally:
         db.close()
 
+def refresh_streak_cache():
+    db = SessionLocal()
+    try:
+        for timer in ["30S", "1M"]:
+            # Load all logs since we need lifetime streaks
+            logs = db.query(models.PredictionLog).filter(models.PredictionLog.timer_type == timer).order_by(models.PredictionLog.id.desc()).all()
+            windows = [100, 200, 300, 500, 1000, 2000, 3000, 5000, 999999]
+            
+            _streak_cache[timer] = {
+                "bs": {str(w): get_loss_streak_stats(logs, "bs", w) for w in windows},
+                "rg": {str(w): get_loss_streak_stats(logs, "rg", w) for w in windows},
+                "totalRecords": len(logs)
+            }
+    except Exception as e:
+        print(f"Error refreshing streak cache: {e}")
+    finally:
+        db.close()
+
 models.Base.metadata.create_all(bind=engine)
 if pg_engine:
     models.Base.metadata.create_all(bind=pg_engine)
@@ -79,10 +97,12 @@ async def lifespan(app: FastAPI):
     
     # Initialize cache synchronously before starting
     refresh_analytics_cache()
+    refresh_streak_cache()
     
     scheduler.add_job(fetcher.fetch_and_store_results, 'interval', seconds=1)
     scheduler.add_job(pg_sync.sync_to_postgres, 'interval', seconds=300)
     scheduler.add_job(refresh_analytics_cache, 'interval', seconds=30)
+    scheduler.add_job(refresh_streak_cache, 'interval', seconds=60)
     scheduler.start()
     yield
     scheduler.shutdown()
@@ -253,6 +273,10 @@ def get_engine_state(timer: str = "30S", db: Session = Depends(get_db)):
         "lossStats": loss_stats,
         "monitorStats": monitor_stats
     }
+
+@app.get("/api/loss-streaks")
+def get_loss_streaks(timer: str = "30S"):
+    return _streak_cache.get(timer, {})
 
 @app.get("/api/history")
 def get_history(timer: str = "30S", page: int = 1, limit: int = 50, db: Session = Depends(get_db)):

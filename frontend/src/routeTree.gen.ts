@@ -14,6 +14,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as HistoryRouteImport } from './routes/history'
 import { Route as HourlyPnlRouteImport } from './routes/hourly-pnl'
+import { Route as LossStreaksRouteImport } from './routes/loss-streaks'
 import { Route as SettingsRouteImport } from './routes/settings'
 
 const IndexRoute = IndexRouteImport.update({
@@ -41,6 +42,11 @@ const HourlyPnlRoute = HourlyPnlRouteImport.update({
   path: '/hourly-pnl',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LossStreaksRoute = LossStreaksRouteImport.update({
+  id: '/loss-streaks',
+  path: '/loss-streaks',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -53,6 +59,7 @@ export interface FileRoutesByFullPath {
   '/analytics': typeof AnalyticsRoute
   '/history': typeof HistoryRoute
   '/hourly-pnl': typeof HourlyPnlRoute
+  '/loss-streaks': typeof LossStreaksRoute
   '/settings': typeof SettingsRoute
 }
 export interface FileRoutesByTo {
@@ -61,6 +68,7 @@ export interface FileRoutesByTo {
   '/analytics': typeof AnalyticsRoute
   '/history': typeof HistoryRoute
   '/hourly-pnl': typeof HourlyPnlRoute
+  '/loss-streaks': typeof LossStreaksRoute
   '/settings': typeof SettingsRoute
 }
 export interface FileRoutesById {
@@ -70,14 +78,28 @@ export interface FileRoutesById {
   '/analytics': typeof AnalyticsRoute
   '/history': typeof HistoryRoute
   '/hourly-pnl': typeof HourlyPnlRoute
+  '/loss-streaks': typeof LossStreaksRoute
   '/settings': typeof SettingsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/admin' | '/analytics' | '/history' | '/hourly-pnl' | '/settings'
+    | '/'
+    | '/admin'
+    | '/analytics'
+    | '/history'
+    | '/hourly-pnl'
+    | '/loss-streaks'
+    | '/settings'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin' | '/analytics' | '/history' | '/hourly-pnl' | '/settings'
+  to:
+    | '/'
+    | '/admin'
+    | '/analytics'
+    | '/history'
+    | '/hourly-pnl'
+    | '/loss-streaks'
+    | '/settings'
   id:
     | '__root__'
     | '/'
@@ -85,6 +107,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/history'
     | '/hourly-pnl'
+    | '/loss-streaks'
     | '/settings'
   fileRoutesById: FileRoutesById
 }
@@ -94,6 +117,7 @@ export interface RootRouteChildren {
   AnalyticsRoute: typeof AnalyticsRoute
   HistoryRoute: typeof HistoryRoute
   HourlyPnlRoute: typeof HourlyPnlRoute
+  LossStreaksRoute: typeof LossStreaksRoute
   SettingsRoute: typeof SettingsRoute
 }
 
@@ -134,6 +158,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HourlyPnlRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/loss-streaks': {
+      id: '/loss-streaks'
+      path: '/loss-streaks'
+      fullPath: '/loss-streaks'
+      preLoaderRoute: typeof LossStreaksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings': {
       id: '/settings'
       path: '/settings'
@@ -150,6 +181,7 @@ const rootRouteChildren: RootRouteChildren = {
   AnalyticsRoute: AnalyticsRoute,
   HistoryRoute: HistoryRoute,
   HourlyPnlRoute: HourlyPnlRoute,
+  LossStreaksRoute: LossStreaksRoute,
   SettingsRoute: SettingsRoute,
 }
 export const routeTree = rootRouteImport

@@ -5,6 +5,7 @@ import {
   Settings,
   Target,
   Clock,
+  TrendingDown,
 } from "lucide-react";
 import type { ComponentType } from "react";
 
@@ -52,6 +53,12 @@ export const adminMenuItems: MenuItem[] = [
     label: "Earnings",
     icon: Target,
     path: "/admin",
+  },
+  {
+    id: "loss-streaks",
+    label: "Loss-Streak Monitor",
+    icon: TrendingDown,
+    path: "/loss-streaks",
   },
   {
     id: "settings",
