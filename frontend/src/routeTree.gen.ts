@@ -10,8 +10,8 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
-import { Route as EarningsRouteImport } from './routes/earnings'
 import { Route as HistoryRouteImport } from './routes/history'
 import { Route as HourlyPnlRouteImport } from './routes/hourly-pnl'
 import { Route as SettingsRouteImport } from './routes/settings'
@@ -21,14 +21,14 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AnalyticsRoute = AnalyticsRouteImport.update({
   id: '/analytics',
   path: '/analytics',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const EarningsRoute = EarningsRouteImport.update({
-  id: '/earnings',
-  path: '/earnings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HistoryRoute = HistoryRouteImport.update({
@@ -49,16 +49,16 @@ const SettingsRoute = SettingsRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/analytics': typeof AnalyticsRoute
-  '/earnings': typeof EarningsRoute
   '/history': typeof HistoryRoute
   '/hourly-pnl': typeof HourlyPnlRoute
   '/settings': typeof SettingsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/analytics': typeof AnalyticsRoute
-  '/earnings': typeof EarningsRoute
   '/history': typeof HistoryRoute
   '/hourly-pnl': typeof HourlyPnlRoute
   '/settings': typeof SettingsRoute
@@ -66,8 +66,8 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/analytics': typeof AnalyticsRoute
-  '/earnings': typeof EarningsRoute
   '/history': typeof HistoryRoute
   '/hourly-pnl': typeof HourlyPnlRoute
   '/settings': typeof SettingsRoute
@@ -75,15 +75,14 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/analytics' | '/earnings' | '/history' | '/hourly-pnl' | '/settings'
+    '/' | '/admin' | '/analytics' | '/history' | '/hourly-pnl' | '/settings'
   fileRoutesByTo: FileRoutesByTo
-  to:
-    '/' | '/analytics' | '/earnings' | '/history' | '/hourly-pnl' | '/settings'
+  to: '/' | '/admin' | '/analytics' | '/history' | '/hourly-pnl' | '/settings'
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/analytics'
-    | '/earnings'
     | '/history'
     | '/hourly-pnl'
     | '/settings'
@@ -91,8 +90,8 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRoute
   AnalyticsRoute: typeof AnalyticsRoute
-  EarningsRoute: typeof EarningsRoute
   HistoryRoute: typeof HistoryRoute
   HourlyPnlRoute: typeof HourlyPnlRoute
   SettingsRoute: typeof SettingsRoute
@@ -107,18 +106,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/analytics': {
       id: '/analytics'
       path: '/analytics'
       fullPath: '/analytics'
       preLoaderRoute: typeof AnalyticsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/earnings': {
-      id: '/earnings'
-      path: '/earnings'
-      fullPath: '/earnings'
-      preLoaderRoute: typeof EarningsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/history': {
@@ -147,8 +146,8 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRoute,
   AnalyticsRoute: AnalyticsRoute,
-  EarningsRoute: EarningsRoute,
   HistoryRoute: HistoryRoute,
   HourlyPnlRoute: HourlyPnlRoute,
   SettingsRoute: SettingsRoute,

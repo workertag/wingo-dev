@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight, Zap, RefreshCcw, TrendingUp, TrendingDown, Target, Wallet } from "lucide-react";
 
-export const Route = createFileRoute("/earnings")({
+export const Route = createFileRoute("/admin")({
   component: EarningHistoryPage,
 });
 

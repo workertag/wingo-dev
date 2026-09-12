@@ -24,35 +24,10 @@ export const adminMenuItems: MenuItem[] = [
     icon: LayoutDashboard,
     path: "/",
   },
-
   {
     id: "history",
     label: "History Logs",
     icon: History,
     path: "/history",
-  },
-  {
-    id: "analytics",
-    label: "Analytics",
-    icon: Activity,
-    path: "/analytics",
-  },
-  {
-    id: "hourly-pnl",
-    label: "Hourly P&L",
-    icon: Clock,
-    path: "/hourly-pnl",
-  },
-  {
-    id: "earnings",
-    label: "Earnings",
-    icon: Target,
-    path: "/earnings",
-  },
-  {
-    id: "settings",
-    label: "Settings",
-    icon: Settings,
-    path: "/settings",
   },
 ];

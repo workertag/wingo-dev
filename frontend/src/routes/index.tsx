@@ -177,16 +177,6 @@ function Dashboard() {
     window.URL.revokeObjectURL(url);
   };
 
-  const resetEngine = async () => {
-    if (confirm("Are you sure you want to reset the engine for " + activeTab + "? This will clear prediction history but keep verified results.")) {
-      try {
-        await fetch(`/api/reset?timer=${activeTab}`, { method: 'POST' });
-        alert("Engine reset successfully.");
-      } catch (err) {
-        alert("Failed to reset engine.");
-      }
-    }
-  };
 
   const resultsArray = data.results || [];
   const latestIssue = resultsArray && resultsArray.length > 0 ? resultsArray[resultsArray.length - 1] : null;
@@ -568,9 +558,6 @@ function Dashboard() {
           <div className="flex gap-3">
             <button onClick={exportCSV} className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-lg transition-colors flex items-center gap-2">
               <Download className="w-4 h-4" /> Export CSV
-            </button>
-            <button onClick={resetEngine} className="px-4 py-2 bg-rose-100 hover:bg-rose-200 text-rose-700 text-xs font-bold rounded-lg transition-colors flex items-center gap-2">
-              <RotateCcw className="w-4 h-4" /> Reset Engine
             </button>
           </div>
         </div>
