@@ -64,6 +64,7 @@ function Dashboard() {
     let fallbackInterval: ReturnType<typeof setInterval>;
     let ws: WebSocket | null = null;
     let wsReconnectTimer: ReturnType<typeof setTimeout>;
+    let pingInterval: ReturnType<typeof setInterval>;
     let alive = true;
 
     const fetchState = async () => {
@@ -86,6 +87,12 @@ function Dashboard() {
 
       ws.onopen = () => {
         console.log("[WS] connected", activeTab);
+        // Ping every 10 seconds to keep connection alive on mobile networks
+        pingInterval = setInterval(() => {
+          if (ws?.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: "ping" }));
+          }
+        }, 10000);
       };
 
       ws.onmessage = () => {
@@ -95,6 +102,7 @@ function Dashboard() {
 
       ws.onclose = () => {
         console.log("[WS] disconnected, reconnecting in 2s…");
+        clearInterval(pingInterval);
         if (alive) {
           wsReconnectTimer = setTimeout(connectWs, 2000);
         }
@@ -112,10 +120,23 @@ function Dashboard() {
     // 30s fallback poll in case WS is down
     fallbackInterval = setInterval(fetchState, 30000);
 
+    // Instantly fetch and reconnect when switching back to the app on mobile
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        fetchState();
+        if (!ws || ws.readyState === WebSocket.CLOSED || ws.readyState === WebSocket.CLOSING) {
+          connectWs();
+        }
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
     return () => {
       alive = false;
       clearInterval(fallbackInterval);
+      clearInterval(pingInterval);
       clearTimeout(wsReconnectTimer);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
       if (ws) {
         ws.onclose = null; // prevent reconnect on intentional close
         ws.close();
