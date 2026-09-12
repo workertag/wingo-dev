@@ -6,6 +6,7 @@ import {
   Target,
   Clock,
   TrendingDown,
+  Calendar,
 } from "lucide-react";
 import type { ComponentType } from "react";
 
@@ -59,6 +60,12 @@ export const adminMenuItems: MenuItem[] = [
     label: "Loss-Streak Monitor",
     icon: TrendingDown,
     path: "/loss-streaks",
+  },
+  {
+    id: "streak-timings",
+    label: "Streak Timings",
+    icon: Calendar,
+    path: "/streak-timings",
   },
   {
     id: "settings",
