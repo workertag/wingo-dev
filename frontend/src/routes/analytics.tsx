@@ -92,7 +92,7 @@ function AnalyticsDashboard() {
         <>
           <div>
             <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest mb-4">Base Engine (All Rounds)</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
               <div className="bg-white rounded-3xl p-6 shadow-[0_8px_30px_rgba(0,0,0,0.03)] border border-slate-100 flex items-center justify-between">
                 <div>
                   <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Samples Analyzed</p>
@@ -117,15 +117,6 @@ function AnalyticsDashboard() {
                   <h3 className="text-3xl font-black">{data.summary.rgWinRate.toFixed(1)}%</h3>
                 </div>
                 <div className="w-12 h-12 rounded-full bg-emerald-400/30 flex items-center justify-center">
-                  <TrendingUp className="w-6 h-6" />
-                </div>
-              </div>
-              <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-3xl p-6 shadow-[0_8px_30px_rgba(99,102,241,0.2)] border border-indigo-400 flex items-center justify-between text-white">
-                <div>
-                  <p className="text-[11px] font-bold text-indigo-100 uppercase tracking-widest mb-1">Net Earnings</p>
-                  <h3 className="text-3xl font-black">${data.summary.totalProfit > 0 ? '+' : ''}{data.summary.totalProfit}</h3>
-                </div>
-                <div className="w-12 h-12 rounded-full bg-indigo-400/30 flex items-center justify-center">
                   <TrendingUp className="w-6 h-6" />
                 </div>
               </div>

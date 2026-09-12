@@ -30,6 +30,12 @@ export const publicMenuItems: MenuItem[] = [
     icon: History,
     path: "/history",
   },
+  {
+    id: "analytics",
+    label: "Analytics",
+    icon: Activity,
+    path: "/analytics",
+  },
 ];
 
 export const adminMenuItems: MenuItem[] = [
