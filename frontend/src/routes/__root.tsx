@@ -1,8 +1,8 @@
 import type { QueryClient } from "@tanstack/react-query";
-import { createRootRouteWithContext, Outlet } from "@tanstack/react-router";
+import { createRootRouteWithContext, Outlet, useLocation } from "@tanstack/react-router";
 
 import { BaseLayout } from "@/components/layout/base-layout";
-import { adminMenuItems } from "@/config/menu";
+import { adminMenuItems, publicMenuItems } from "@/config/menu";
 
 interface RouterContext {
   queryClient: QueryClient;
@@ -13,10 +13,13 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 });
 
 function RootLayout() {
-  return (
-    <BaseLayout menuItems={adminMenuItems}>
-      <Outlet />
+  const location = useLocation();
+  const isAdminRoute = location.pathname !== "/" && location.pathname !== "/history";
+  const menuItems = isAdminRoute ? adminMenuItems : publicMenuItems;
 
+  return (
+    <BaseLayout menuItems={menuItems}>
+      <Outlet />
     </BaseLayout>
   );
 }

@@ -17,7 +17,7 @@ export interface MenuItem {
   children?: MenuItem[];
 }
 
-export const adminMenuItems: MenuItem[] = [
+export const publicMenuItems: MenuItem[] = [
   {
     id: "dashboard",
     label: "Live Feed",
@@ -29,5 +29,33 @@ export const adminMenuItems: MenuItem[] = [
     label: "History Logs",
     icon: History,
     path: "/history",
+  },
+];
+
+export const adminMenuItems: MenuItem[] = [
+  ...publicMenuItems,
+  {
+    id: "analytics",
+    label: "Analytics",
+    icon: Activity,
+    path: "/analytics",
+  },
+  {
+    id: "hourly-pnl",
+    label: "Hourly P&L",
+    icon: Clock,
+    path: "/hourly-pnl",
+  },
+  {
+    id: "earnings",
+    label: "Earnings",
+    icon: Target,
+    path: "/admin",
+  },
+  {
+    id: "settings",
+    label: "Settings",
+    icon: Settings,
+    path: "/settings",
   },
 ];
