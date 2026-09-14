@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { Calculator, Play, Clock, Layers, TrendingUp, AlertCircle, ShieldAlert, Zap, RefreshCcw, Hash, Settings2 } from "lucide-react";
+import { Calculator, Play, Clock, Layers, TrendingUp, AlertCircle, ShieldAlert, Zap, RefreshCcw, Hash, Settings2, SkipForward } from "lucide-react";
 
 export const Route = createFileRoute("/calculator")({
   component: CalculatorPage,
@@ -8,6 +8,7 @@ export const Route = createFileRoute("/calculator")({
 
 function CalculatorPage() {
   const [baseBet, setBaseBet] = useState<number>(1);
+  const [startingLevel, setStartingLevel] = useState<number>(1);
   const [maxLevel, setMaxLevel] = useState<number>(8);
   const [hours, setHours] = useState<number>(10);
   const [timer, setTimer] = useState<string>("30S");
@@ -20,7 +21,7 @@ function CalculatorPage() {
   const handleSimulate = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/simulate?timer=${timer}&hours=${hours}&baseBet=${baseBet}&maxLevel=${maxLevel}&multiplier=${multiplier}&smartMultiplier=${smartMultiplier}`);
+      const res = await fetch(`/api/simulate?timer=${timer}&hours=${hours}&baseBet=${baseBet}&maxLevel=${maxLevel}&startingLevel=${startingLevel}&multiplier=${multiplier}&smartMultiplier=${smartMultiplier}`);
       const data = await res.json();
       
       setSimulationResult({
@@ -63,7 +64,7 @@ function CalculatorPage() {
               
               <div>
                 <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-                  Minimum Starting Level (Base Bet)
+                  Base Bet (Level 1 Amount)
                 </label>
                 <div className="relative">
                   <Layers className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -74,6 +75,22 @@ function CalculatorPage() {
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-9 pr-4 text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
+                  Bet Starting Level (Virtual Wait)
+                </label>
+                <div className="relative">
+                  <SkipForward className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input 
+                    type="number" 
+                    value={startingLevel}
+                    onChange={(e) => setStartingLevel(Number(e.target.value))}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-9 pr-4 text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                  />
+                </div>
+                <p className="text-[10px] text-slate-400 mt-1">If 3, bot waits for 2 virtual losses then bets on level 3.</p>
               </div>
 
               <div>

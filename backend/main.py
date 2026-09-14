@@ -625,6 +625,7 @@ def simulate(
     hours: int = 10,
     baseBet: float = 1.0,
     maxLevel: int = 8,
+    startingLevel: int = 1,
     timer: str = "30S",
     multiplier: float = 2.0,
     smartMultiplier: bool = False,
@@ -650,59 +651,72 @@ def simulate(
                 bet = math.ceil((total_lost + baseBet) / 0.96)
         else:
             bet = baseBet * (multiplier ** i)
-            # if user passes baseBet=1, multiplier=2, it correctly does 1, 2, 4, 8...
         bets.append(bet)
         total_lost += bet
         
-    capital_req = sum(bets)
+    # Capital required only counts bets from startingLevel up to maxLevel
+    capital_req = sum(bets[startingLevel - 1:])
     
     bs_current_level = 1
     rg_current_level = 1
     
     total_profit = 0
-    total_games_bs = 0
-    total_games_rg = 0
+    total_bets_placed = 0
     bs_max_hits = 0
     rg_max_hits = 0
     
     for l in logs:
         # Simulate BS
         if l.bs_status in ['WIN', 'LOSS']:
-            total_games_bs += 1
-            bet_amount = bets[bs_current_level - 1]
-            if l.bs_status == 'WIN':
-                total_profit -= bet_amount
-                total_profit += bet_amount * 1.96
-                bs_current_level = 1
-            elif l.bs_status == 'LOSS':
-                total_profit -= bet_amount
-                if bs_current_level >= maxLevel:
-                    bs_max_hits += 1
+            if bs_current_level >= startingLevel:
+                # Real betting mode
+                total_bets_placed += 1
+                bet_amount = bets[bs_current_level - 1]
+                if l.bs_status == 'WIN':
+                    total_profit -= bet_amount
+                    total_profit += bet_amount * 1.96
                     bs_current_level = 1
-                else:
+                elif l.bs_status == 'LOSS':
+                    total_profit -= bet_amount
+                    if bs_current_level >= maxLevel:
+                        bs_max_hits += 1
+                        bs_current_level = 1
+                    else:
+                        bs_current_level += 1
+            else:
+                # Virtual betting mode (waiting for sequence)
+                if l.bs_status == 'WIN':
+                    bs_current_level = 1
+                elif l.bs_status == 'LOSS':
                     bs_current_level += 1
                     
         # Simulate RG
         if l.rg_status in ['WIN', 'LOSS']:
-            total_games_rg += 1
-            bet_amount = bets[rg_current_level - 1]
-            if l.rg_status == 'WIN':
-                total_profit -= bet_amount
-                total_profit += bet_amount * 1.96
-                rg_current_level = 1
-            elif l.rg_status == 'LOSS':
-                total_profit -= bet_amount
-                if rg_current_level >= maxLevel:
-                    rg_max_hits += 1
+            if rg_current_level >= startingLevel:
+                # Real betting mode
+                total_bets_placed += 1
+                bet_amount = bets[rg_current_level - 1]
+                if l.rg_status == 'WIN':
+                    total_profit -= bet_amount
+                    total_profit += bet_amount * 1.96
                     rg_current_level = 1
-                else:
+                elif l.rg_status == 'LOSS':
+                    total_profit -= bet_amount
+                    if rg_current_level >= maxLevel:
+                        rg_max_hits += 1
+                        rg_current_level = 1
+                    else:
+                        rg_current_level += 1
+            else:
+                # Virtual betting mode
+                if l.rg_status == 'WIN':
+                    rg_current_level = 1
+                elif l.rg_status == 'LOSS':
                     rg_current_level += 1
 
-    total_games = max(total_games_bs, total_games_rg)
-                    
     return {
         "totalProfit": total_profit,
-        "totalGames": total_games,
+        "totalGames": total_bets_placed,
         "bsMaxLevelHits": bs_max_hits,
         "rgMaxLevelHits": rg_max_hits,
         "totalMaxLevelHits": bs_max_hits + rg_max_hits,
