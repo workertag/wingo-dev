@@ -173,8 +173,35 @@ def fetch_and_store_results():
                         ).order_by(PredictionLog.id.desc()).all()
                         
                         window = state.window_size if getattr(state, 'window_size', None) else 300
-                        b_decision = math_engine.bs_decision(all_results[-window:], state, logs)
-                        r_decision = math_engine.rg_decision(all_results[-window:], state, logs)
+                        if window == -1:
+                            b_window = len(all_results)
+                            r_window = len(all_results)
+                        elif window == -2:
+                            import simulator
+                            sim = simulator.run_window_simulation(all_results, num_test_games=300)
+                            
+                            best_bs_w = 300
+                            best_bs_wr = -1
+                            for w_str, stats in sim['bs'].items():
+                                if stats['win_rate'] > best_bs_wr:
+                                    best_bs_wr = stats['win_rate']
+                                    best_bs_w = int(w_str)
+                                    
+                            best_rg_w = 300
+                            best_rg_wr = -1
+                            for w_str, stats in sim['rg'].items():
+                                if stats['win_rate'] > best_rg_wr:
+                                    best_rg_wr = stats['win_rate']
+                                    best_rg_w = int(w_str)
+                                    
+                            b_window = best_bs_w
+                            r_window = best_rg_w
+                        else:
+                            b_window = window
+                            r_window = window
+
+                        b_decision = math_engine.bs_decision(all_results[-b_window:], state, logs)
+                        r_decision = math_engine.rg_decision(all_results[-r_window:], state, logs)
                         
 
                         

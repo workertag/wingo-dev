@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Settings as SettingsIcon, Save, RefreshCw, Activity } from "lucide-react";
+import { Settings as SettingsIcon, Save, RefreshCw, Activity, Target, Database } from "lucide-react";
 import { LoginScreen } from "@/components/LoginScreen";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
@@ -9,7 +9,10 @@ export const Route = createFileRoute("/settings")({
 });
 
 function SettingsPage() {
-  const [windowSize, setWindowSize] = useState<number>(300);
+  // mode can be 'smart', 'all', or 'custom'
+  const [mode, setMode] = useState<"smart" | "all" | "custom">("smart");
+  const [customSize, setCustomSize] = useState<number>(300);
+  
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
   const [message, setMessage] = useState<{text: string, type: 'success' | 'error'} | null>(null);
@@ -19,8 +22,15 @@ function SettingsPage() {
       try {
         const res = await fetch("/api/state?timer=30S");
         const data = await res.json();
-        if (data && data.windowSize) {
-          setWindowSize(data.windowSize);
+        if (data && data.windowSize !== undefined) {
+          if (data.windowSize === -2) {
+            setMode("smart");
+          } else if (data.windowSize === -1) {
+            setMode("all");
+          } else {
+            setMode("custom");
+            setCustomSize(data.windowSize || 300);
+          }
         }
       } catch (err) {
         console.error("Failed to fetch settings", err);
@@ -34,11 +44,16 @@ function SettingsPage() {
   const handleSave = async () => {
     setSaving(true);
     setMessage(null);
+    
+    let sizeToSave = customSize;
+    if (mode === "smart") sizeToSave = -2;
+    if (mode === "all") sizeToSave = -1;
+    
     try {
       const res = await fetch("/api/settings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ windowSize: windowSize, timerType: "30S" })
+        body: JSON.stringify({ windowSize: sizeToSave, timerType: "30S" })
       });
       const data = await res.json();
       if (data.success) {
@@ -78,10 +93,10 @@ function SettingsPage() {
 
           <div className="space-y-4 text-center">
             <h1 className="bg-gradient-to-br from-gray-900 to-gray-600 bg-clip-text text-4xl font-extrabold tracking-tight text-transparent sm:text-5xl dark:from-white dark:to-gray-400">
-              Settings
+              Engine Settings
             </h1>
             <p className="mx-auto max-w-md text-lg text-gray-500 dark:text-gray-400">
-              Configure your prediction engine parameters.
+              Configure your core AI prediction parameters.
             </p>
           </div>
 
@@ -101,38 +116,77 @@ function SettingsPage() {
                 <div>
                   <h3 className="text-xl font-bold flex items-center gap-2 text-gray-900 dark:text-white mb-2">
                     <Activity className="w-6 h-6 text-indigo-500" />
-                    Prediction Window Size
+                    Prediction Window Mode
                   </h3>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-                    Number of recent games to analyze when generating the next prediction. 
-                    Default is 300. Changing this affects how the AI interprets trends.
+                    Choose how the AI analyzes historical games to formulate its next prediction. 
                   </p>
                   
-                  <div className="bg-gray-50 dark:bg-gray-800/50 p-6 rounded-2xl border border-gray-100 dark:border-gray-800">
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                          History Games (Window)
-                        </label>
-                        <input 
-                          type="number"
-                          value={windowSize}
-                          onChange={(e) => setWindowSize(parseInt(e.target.value) || 0)}
-                          className="w-32 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-xl px-4 py-2 font-bold focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
-                          min="50"
-                          max="1000"
-                        />
+                  <div className="space-y-3 mb-6">
+                    <button 
+                      onClick={() => setMode("smart")}
+                      className={`w-full flex items-start gap-4 p-4 rounded-2xl border-2 transition-all text-left ${mode === "smart" ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-500/10' : 'border-gray-200 dark:border-gray-800 hover:border-indigo-200 dark:hover:border-indigo-800 bg-transparent'}`}
+                    >
+                      <div className={`mt-1 p-2 rounded-lg ${mode === "smart" ? 'bg-indigo-500 text-white' : 'bg-gray-100 text-gray-400 dark:bg-gray-800'}`}>
+                        <Target className="w-5 h-5" />
                       </div>
-                      
-                      <button 
-                        onClick={handleSave}
-                        disabled={saving}
-                        className="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-bold transition-all shadow-lg shadow-indigo-600/20 active:scale-95 disabled:opacity-70 disabled:active:scale-100 w-full sm:w-auto"
-                      >
-                        {saving ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-                        {saving ? "Saving..." : "Save Settings"}
-                      </button>
-                    </div>
+                      <div>
+                        <h4 className={`font-bold ${mode === "smart" ? 'text-indigo-900 dark:text-indigo-300' : 'text-gray-700 dark:text-gray-300'}`}>Smart Window Detection</h4>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Automatically tests various historical windows in real-time and applies the one with the highest proven win rate.</p>
+                      </div>
+                    </button>
+
+                    <button 
+                      onClick={() => setMode("all")}
+                      className={`w-full flex items-start gap-4 p-4 rounded-2xl border-2 transition-all text-left ${mode === "all" ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-500/10' : 'border-gray-200 dark:border-gray-800 hover:border-indigo-200 dark:hover:border-indigo-800 bg-transparent'}`}
+                    >
+                      <div className={`mt-1 p-2 rounded-lg ${mode === "all" ? 'bg-indigo-500 text-white' : 'bg-gray-100 text-gray-400 dark:bg-gray-800'}`}>
+                        <Database className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h4 className={`font-bold ${mode === "all" ? 'text-indigo-900 dark:text-indigo-300' : 'text-gray-700 dark:text-gray-300'}`}>All Data Available</h4>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Forces the engine to factor in all available game history without cutting off at a specific window size.</p>
+                      </div>
+                    </button>
+
+                    <button 
+                      onClick={() => setMode("custom")}
+                      className={`w-full flex items-start gap-4 p-4 rounded-2xl border-2 transition-all text-left ${mode === "custom" ? 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-500/10' : 'border-gray-200 dark:border-gray-800 hover:border-indigo-200 dark:hover:border-indigo-800 bg-transparent'}`}
+                    >
+                      <div className={`mt-1 p-2 rounded-lg ${mode === "custom" ? 'bg-indigo-500 text-white' : 'bg-gray-100 text-gray-400 dark:bg-gray-800'}`}>
+                        <SettingsIcon className="w-5 h-5" />
+                      </div>
+                      <div className="w-full">
+                        <h4 className={`font-bold ${mode === "custom" ? 'text-indigo-900 dark:text-indigo-300' : 'text-gray-700 dark:text-gray-300'}`}>Custom Fixed Window</h4>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 mb-3">Set an exact fixed number of past games for the engine to analyze.</p>
+                        
+                        {mode === "custom" && (
+                          <div className="flex items-center gap-3">
+                            <input 
+                              type="number"
+                              value={customSize}
+                              onChange={(e) => setCustomSize(parseInt(e.target.value) || 0)}
+                              className="w-32 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-xl px-4 py-2 font-bold focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+                              min="50"
+                              max="1000"
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                            <span className="text-sm font-semibold text-gray-500">games</span>
+                          </div>
+                        )}
+                      </div>
+                    </button>
+                  </div>
+                  
+                  <div className="flex justify-end border-t border-gray-100 dark:border-gray-800 pt-6">
+                    <button 
+                      onClick={handleSave}
+                      disabled={saving}
+                      className="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-xl font-bold transition-all shadow-lg shadow-indigo-600/20 active:scale-95 disabled:opacity-70 disabled:active:scale-100 w-full sm:w-auto"
+                    >
+                      {saving ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+                      {saving ? "Saving..." : "Save Settings"}
+                    </button>
                   </div>
                 </div>
 
