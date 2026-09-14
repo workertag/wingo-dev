@@ -21,7 +21,6 @@ def run_window_simulation(history_cache, num_test_games=300):
     }
     
     # Slice the relevant history
-    # We want to test the last `num_test_games`
     start_idx = len(history_cache) - num_test_games
     
     for i in range(start_idx, len(history_cache)):

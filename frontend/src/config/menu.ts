@@ -13,6 +13,7 @@ import {
   Hash,
   TrendingUp,
   Zap,
+  Calculator,
 } from "lucide-react";
 import type { ComponentType } from "react";
 
@@ -60,6 +61,12 @@ export const adminMenuItems: MenuItem[] = [
     label: "Earnings",
     icon: Target,
     path: "/admin",
+  },
+  {
+    id: "calculator",
+    label: "Profit Simulator",
+    icon: Calculator,
+    path: "/calculator",
   },
   {
     id: "loss-streaks",
