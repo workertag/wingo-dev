@@ -105,6 +105,11 @@ function CalculatorPage() {
               </div>
               
               <div>
+                {/* 
+                  In a Wingo 2x system:
+                  Level 1: Bet 1. Win = 1.96
+                  Level n: Bet 2^(n-1). Win = 2^(n-1) * 1.96
+                */}
                 <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
                   Minimum Starting Level (Base Bet)
                 </label>

@@ -649,7 +649,7 @@ def run_simulation(
         # Simulate BS
         if l.bs_status in ['WIN', 'LOSS']:
             total_games_bs += 1
-            bet_amount = baseBet * (3 ** (bs_current_level - 1))
+            bet_amount = baseBet * (2 ** (bs_current_level - 1))
             if l.bs_status == 'WIN':
                 total_profit -= bet_amount
                 total_profit += bet_amount * 1.96
@@ -665,7 +665,7 @@ def run_simulation(
         # Simulate RG
         if l.rg_status in ['WIN', 'LOSS']:
             total_games_rg += 1
-            bet_amount = baseBet * (3 ** (rg_current_level - 1))
+            bet_amount = baseBet * (2 ** (rg_current_level - 1))
             if l.rg_status == 'WIN':
                 total_profit -= bet_amount
                 total_profit += bet_amount * 1.96
@@ -680,8 +680,8 @@ def run_simulation(
 
     total_games = max(total_games_bs, total_games_rg)
 
-    # Required capital for max level (assuming 3x martingale)
-    capital_req = sum(baseBet * (3 ** i) for i in range(maxLevel))
+    # Required capital for max level (assuming 2x martingale)
+    capital_req = sum(baseBet * (2 ** i) for i in range(maxLevel))
                     
     return {
         "totalProfit": total_profit,
