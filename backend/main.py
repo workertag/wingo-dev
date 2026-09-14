@@ -4,6 +4,7 @@ from datetime import datetime
 from collections import defaultdict
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 from pydantic import BaseModel
 import os
 import logging

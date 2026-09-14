@@ -50,5 +50,10 @@ jobs:
             ./venv/bin/pip install -r requirements.txt
             lsof -ti :8001 | xargs kill -9 2>/dev/null || true
             
+            # Check if daemon is running, if not, start it
+            if ! pgrep -f "run-server-daemon.sh" > /dev/null; then
+                nohup sh run-server-daemon.sh > server.log 2>&1 &
+            fi
+            
             # Clean up temporary upload folder
             rm -rf /root/wingo-dev/deploy-temp/
