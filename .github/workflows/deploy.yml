@@ -48,6 +48,7 @@ jobs:
             # Restart backend daemon
             cd /root/wingo-dev/backend
             ./venv/bin/pip install -r requirements.txt
+            lsof -ti :8000 | xargs kill -9 2>/dev/null || true
             lsof -ti :8001 | xargs kill -9 2>/dev/null || true
             
             # Check if daemon is running, if not, start it
