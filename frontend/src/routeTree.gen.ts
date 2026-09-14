@@ -22,6 +22,7 @@ import { Route as PatternHotColdRouteImport } from './routes/pattern/hot-cold'
 import { Route as PatternRecoveryRouteImport } from './routes/pattern/recovery'
 import { Route as PatternSequencesRouteImport } from './routes/pattern/sequences'
 import { Route as PatternWinStreaksRouteImport } from './routes/pattern/win-streaks'
+import { Route as PatternWindowCompareRouteImport } from './routes/pattern/window-compare'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -88,6 +89,11 @@ const PatternWinStreaksRoute = PatternWinStreaksRouteImport.update({
   path: '/pattern/win-streaks',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PatternWindowCompareRoute = PatternWindowCompareRouteImport.update({
+  id: '/pattern/window-compare',
+  path: '/pattern/window-compare',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -103,6 +109,7 @@ export interface FileRoutesByFullPath {
   '/pattern/recovery': typeof PatternRecoveryRoute
   '/pattern/sequences': typeof PatternSequencesRoute
   '/pattern/win-streaks': typeof PatternWinStreaksRoute
+  '/pattern/window-compare': typeof PatternWindowCompareRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -118,6 +125,7 @@ export interface FileRoutesByTo {
   '/pattern/recovery': typeof PatternRecoveryRoute
   '/pattern/sequences': typeof PatternSequencesRoute
   '/pattern/win-streaks': typeof PatternWinStreaksRoute
+  '/pattern/window-compare': typeof PatternWindowCompareRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -134,6 +142,7 @@ export interface FileRoutesById {
   '/pattern/recovery': typeof PatternRecoveryRoute
   '/pattern/sequences': typeof PatternSequencesRoute
   '/pattern/win-streaks': typeof PatternWinStreaksRoute
+  '/pattern/window-compare': typeof PatternWindowCompareRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -151,6 +160,7 @@ export interface FileRouteTypes {
     | '/pattern/recovery'
     | '/pattern/sequences'
     | '/pattern/win-streaks'
+    | '/pattern/window-compare'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -166,6 +176,7 @@ export interface FileRouteTypes {
     | '/pattern/recovery'
     | '/pattern/sequences'
     | '/pattern/win-streaks'
+    | '/pattern/window-compare'
   id:
     | '__root__'
     | '/'
@@ -181,6 +192,7 @@ export interface FileRouteTypes {
     | '/pattern/recovery'
     | '/pattern/sequences'
     | '/pattern/win-streaks'
+    | '/pattern/window-compare'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -197,6 +209,7 @@ export interface RootRouteChildren {
   PatternRecoveryRoute: typeof PatternRecoveryRoute
   PatternSequencesRoute: typeof PatternSequencesRoute
   PatternWinStreaksRoute: typeof PatternWinStreaksRoute
+  PatternWindowCompareRoute: typeof PatternWindowCompareRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -292,6 +305,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PatternWinStreaksRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pattern/window-compare': {
+      id: '/pattern/window-compare'
+      path: '/pattern/window-compare'
+      fullPath: '/pattern/window-compare'
+      preLoaderRoute: typeof PatternWindowCompareRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -309,6 +329,7 @@ const rootRouteChildren: RootRouteChildren = {
   PatternRecoveryRoute: PatternRecoveryRoute,
   PatternSequencesRoute: PatternSequencesRoute,
   PatternWinStreaksRoute: PatternWinStreaksRoute,
+  PatternWindowCompareRoute: PatternWindowCompareRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

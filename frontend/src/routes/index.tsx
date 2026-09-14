@@ -2,6 +2,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Zap, Activity, Info, BarChart3, Layers, Radio, Download, RotateCcw } from "lucide-react";
+import SequencesPage from './pattern/sequences';
+import StreakTimingsPage from './pattern/streak-timings';
+import RecoveryPage from './pattern/recovery';
+import HotColdPage from './pattern/hot-cold';
 
 export const Route = createFileRoute("/")({
   component: Dashboard,

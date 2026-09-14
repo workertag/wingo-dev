@@ -9,8 +9,7 @@ _advanced_cache = {"30S": {}, "1M": {}}
 _analytics_lock = threading.Lock()
 
 def calculate_heatmap(logs):
-    # Returns matrix of win/loss per weekday per hour
-    # 0 = Monday, 6 = Sunday
+    # Returns matrix of win/loss per YYYY-MM-DD per hour
     # 0-23 hours
     heatmap_bs = defaultdict(lambda: defaultdict(lambda: {"wins": 0, "losses": 0}))
     heatmap_rg = defaultdict(lambda: defaultdict(lambda: {"wins": 0, "losses": 0}))
@@ -22,8 +21,8 @@ def calculate_heatmap(logs):
             continue
             
         dt = datetime.fromtimestamp(log.time / 1000.0, tz)
-        day = dt.weekday()
-        hour = dt.hour
+        day = dt.strftime("%Y-%m-%d")
+        hour = str(dt.hour)
         
         if log.bs_status in ('WIN', 'LOSS'):
             if log.bs_status == 'WIN':

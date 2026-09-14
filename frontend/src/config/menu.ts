@@ -12,6 +12,7 @@ import {
   RotateCcw,
   Hash,
   TrendingUp,
+  Zap,
 } from "lucide-react";
 import type { ComponentType } from "react";
 
@@ -94,6 +95,12 @@ export const adminMenuItems: MenuItem[] = [
         label: "Recovery Rate",
         icon: RotateCcw,
         path: "/pattern/recovery",
+      },
+      {
+        id: "pattern-window-simulator",
+        label: "Window Simulator",
+        icon: Zap,
+        path: "/pattern/window-compare",
       },
       {
         id: "pattern-hot-cold",

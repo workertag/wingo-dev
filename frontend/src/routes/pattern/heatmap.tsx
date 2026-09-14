@@ -8,7 +8,6 @@ export const Route = createFileRoute("/pattern/heatmap")({
 });
 
 const BACKEND_URL = "/api/advanced-analytics";
-const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
 
 function HeatmapPage() {
@@ -16,6 +15,7 @@ function HeatmapPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("30S");
   const [activeEngine, setActiveEngine] = useState("bs"); // 'bs' or 'rg'
+  const [windowDays, setWindowDays] = useState(7); // 7, 14, 30
 
   const fetchAnalytics = async (tab: string) => {
     setLoading(true);
@@ -85,7 +85,7 @@ function HeatmapPage() {
         </div>
       </div>
 
-      <div className="flex items-center gap-4 mb-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
         <div className="flex p-1 bg-white rounded-xl shadow-sm border border-slate-200">
           <button
             onClick={() => setActiveEngine("bs")}
@@ -98,6 +98,27 @@ function HeatmapPage() {
             className={`px-6 py-2 text-sm font-bold rounded-lg transition-all ${activeEngine === 'rg' ? 'bg-emerald-50 text-emerald-600' : 'text-slate-500 hover:text-slate-700'}`}
           >
             Red/Green Engine
+          </button>
+        </div>
+        
+        <div className="flex p-1 bg-white rounded-xl shadow-sm border border-slate-200">
+          <button
+            onClick={() => setWindowDays(7)}
+            className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${windowDays === 7 ? 'bg-slate-800 text-white' : 'text-slate-500 hover:text-slate-700'}`}
+          >
+            7 Days
+          </button>
+          <button
+            onClick={() => setWindowDays(14)}
+            className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${windowDays === 14 ? 'bg-slate-800 text-white' : 'text-slate-500 hover:text-slate-700'}`}
+          >
+            14 Days
+          </button>
+          <button
+            onClick={() => setWindowDays(30)}
+            className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${windowDays === 30 ? 'bg-slate-800 text-white' : 'text-slate-500 hover:text-slate-700'}`}
+          >
+            30 Days
           </button>
         </div>
       </div>
@@ -123,32 +144,42 @@ function HeatmapPage() {
             <table className="w-full border-collapse min-w-[800px]">
               <thead>
                 <tr>
-                  <th className="p-2 border-b border-slate-200 text-left text-xs font-black text-slate-400 uppercase tracking-widest w-24">Day</th>
+                  <th className="p-2 border-b border-slate-200 text-left text-xs font-black text-slate-400 uppercase tracking-widest w-24">Date</th>
                   {HOURS.map(h => (
                     <th key={h} className="p-2 border-b border-slate-200 text-center text-[10px] font-bold text-slate-500">{h.toString().padStart(2, '0')}:00</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {DAYS.map((day, dIdx) => (
-                  <tr key={day}>
-                    <td className="p-2 border-b border-slate-100 text-xs font-bold text-slate-700">{day.substring(0, 3)}</td>
-                    {HOURS.map(h => {
-                      const cell = data[activeEngine]?.[dIdx.toString()]?.[h.toString()] || {wins: 0, losses: 0};
-                      const colorClass = getHeatmapColor(cell.wins, cell.losses);
-                      const total = cell.wins + cell.losses;
-                      const rate = total > 0 ? Math.round((cell.wins / total) * 100) : 0;
-                      
-                      return (
-                        <td key={h} className="p-1 border-b border-slate-100 text-center">
-                          <div className={`w-full h-10 rounded border flex items-center justify-center text-[10px] transition-all hover:scale-110 cursor-default ${colorClass}`} title={`${cell.wins}W - ${cell.losses}L (${rate}%)`}>
-                            {total > 0 ? `${rate}%` : '-'}
-                          </div>
-                        </td>
-                      )
-                    })}
-                  </tr>
-                ))}
+                {(() => {
+                  const engineData = data[activeEngine] || {};
+                  const allDates = Object.keys(engineData).sort((a, b) => b.localeCompare(a));
+                  const displayDates = allDates.slice(0, windowDays);
+                  
+                  if (displayDates.length === 0) {
+                    return <tr><td colSpan={25} className="py-8 text-center text-slate-400 font-bold">No date records found.</td></tr>;
+                  }
+
+                  return displayDates.map(date => (
+                    <tr key={date}>
+                      <td className="p-2 border-b border-slate-100 text-[10px] font-bold text-slate-700 whitespace-nowrap">{date}</td>
+                      {HOURS.map(h => {
+                        const cell = engineData[date]?.[h.toString()] || {wins: 0, losses: 0};
+                        const colorClass = getHeatmapColor(cell.wins, cell.losses);
+                        const total = cell.wins + cell.losses;
+                        const rate = total > 0 ? Math.round((cell.wins / total) * 100) : 0;
+                        
+                        return (
+                          <td key={h} className="p-1 border-b border-slate-100 text-center">
+                            <div className={`w-full h-10 rounded border flex items-center justify-center text-[10px] transition-all hover:scale-110 cursor-default ${colorClass}`} title={`${cell.wins}W - ${cell.losses}L (${rate}%)`}>
+                              {total > 0 ? `${rate}%` : '-'}
+                            </div>
+                          </td>
+                        )
+                      })}
+                    </tr>
+                  ));
+                })()}
               </tbody>
             </table>
           )}

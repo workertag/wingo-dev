@@ -6,12 +6,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 import os
+import logging
 from apscheduler.schedulers.background import BackgroundScheduler
 from contextlib import asynccontextmanager
 
-import models, database, fetcher, math_engine, pg_sync, analytics_advanced
+import models, database, fetcher, math_engine, pg_sync, analytics_advanced, simulator
 from database import engine, pg_engine, get_db, SessionLocal
 from ws_manager import manager as ws_manager
+
+logger = logging.getLogger(__name__)
 
 _analytics_cache = {"30S": {}, "1M": {}}
 _streak_cache = {"30S": {}, "1M": {}}
@@ -100,7 +103,6 @@ async def lifespan(app: FastAPI):
     scheduler.add_job(analytics_advanced.refresh_advanced_cache, 'interval', seconds=60, max_instances=1)
     
     # Run initially
-    fetcher.refresh_history_cache()
     refresh_analytics_cache()
     refresh_streak_cache()
     analytics_advanced.refresh_advanced_cache()
@@ -132,6 +134,19 @@ def login(req: LoginRequest):
     if req.password == admin_password:
         return {"success": True}
     return {"success": False, "message": "Invalid password"}
+
+class SettingsRequest(BaseModel):
+    windowSize: int
+    timerType: str = "30S"
+
+@app.post("/api/settings")
+def update_settings(req: SettingsRequest, db: Session = Depends(get_db)):
+    state = db.query(models.EngineState).filter(models.EngineState.timer_type == req.timerType).first()
+    if state:
+        state.window_size = req.windowSize
+        db.commit()
+        return {"success": True, "windowSize": req.windowSize}
+    return {"success": False, "message": "State not found"}
 
 def get_loss_streak_stats(logs, type_str: str, window_size: int = 100):
     ev = [x for x in logs if getattr(x, f"{type_str}_status") in ('WIN', 'LOSS')][:window_size]
@@ -200,6 +215,34 @@ def reset_engine(timer: str = "30S"):
     db.commit()
     return {"status": "success", "message": "Engine reset successfully. History preserved."}
 
+@app.get("/api/games")
+def get_games(timer: str = "30S", db: Session = Depends(get_db)):
+    results = db.query(models.WinGoResult).filter(
+        models.WinGoResult.timer_type == timer
+    ).order_by(models.WinGoResult.issue.desc()).limit(300).all()
+    
+    h = [r.num for r in reversed(results)]
+    return {"status": "ok", "games": h}
+
+@app.get("/api/window-simulation")
+def get_window_simulation(timer: str = "30S", db: Session = Depends(get_db)):
+    # We need max window + test games = 500 + 300 = 800 games
+    results = db.query(models.WinGoResult).filter(
+        models.WinGoResult.timer_type == timer
+    ).order_by(models.WinGoResult.issue.desc()).limit(800).all()
+    
+    h = [r.num for r in reversed(results)]
+    
+    if len(h) < 200:
+        return {"error": f"Not enough history to run simulation. Need at least 200 games, found {len(h)}"}
+        
+    try:
+        sim_results = simulator.run_window_simulation(h, num_test_games=300)
+        return sim_results
+    except Exception as e:
+        logger.error(f"Simulation failed: {e}")
+        return {"error": str(e)}
+
 @app.websocket("/api/ws")
 async def websocket_endpoint(ws: WebSocket, timer: str = "30S"):
     await ws_manager.connect(ws, timer)
@@ -226,7 +269,8 @@ def get_engine_state(timer: str = "30S", db: Session = Depends(get_db)):
             "bsShieldCooldown": state.bs_shield_cooldown,
             "rgShieldCooldown": state.rg_shield_cooldown,
             "gaps": state.gaps,
-            "missedRounds": state.missed_rounds
+            "missedRounds": state.missed_rounds,
+            "windowSize": state.window_size
         }
         
     pending = db.query(models.PendingPrediction).filter(models.PendingPrediction.timer_type == timer).order_by(models.PendingPrediction.created_at.desc()).first()

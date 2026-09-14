@@ -172,8 +172,9 @@ def fetch_and_store_results():
                             PredictionLog.timer_type == timer_type
                         ).order_by(PredictionLog.id.desc()).all()
                         
-                        b_decision = math_engine.bs_decision(all_results[-300:], state, logs)
-                        r_decision = math_engine.rg_decision(all_results[-300:], state, logs)
+                        window = state.window_size if getattr(state, 'window_size', None) else 300
+                        b_decision = math_engine.bs_decision(all_results[-window:], state, logs)
+                        r_decision = math_engine.rg_decision(all_results[-window:], state, logs)
                         
 
                         

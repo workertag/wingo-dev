@@ -25,6 +25,7 @@ class EngineState(Base):
     missed_rounds = Column(Integer, default=0)
     last_issue = Column(String, nullable=True)
     fresh_baseline_issue = Column(String, nullable=True)
+    window_size = Column(Integer, default=300)
 
 class PredictionLog(Base):
     __tablename__ = "prediction_logs"
