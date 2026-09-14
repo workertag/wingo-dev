@@ -96,6 +96,24 @@ scheduler = BackgroundScheduler()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Auto-migrate DB schema for window_size
+    try:
+        db = database.SessionLocal()
+        db.execute(text("ALTER TABLE engine_state ADD COLUMN window_size INTEGER DEFAULT 300"))
+        db.commit()
+        db.close()
+    except Exception:
+        pass
+        
+    try:
+        if database.PgSessionLocal:
+            pg_db = database.PgSessionLocal()
+            pg_db.execute(text("ALTER TABLE engine_state ADD COLUMN window_size INTEGER DEFAULT 300"))
+            pg_db.commit()
+            pg_db.close()
+    except Exception:
+        pass
+
     # Give the WS manager access to the running event loop so the
     # synchronous fetcher thread can schedule async broadcasts.
     ws_manager.set_loop(asyncio.get_running_loop())

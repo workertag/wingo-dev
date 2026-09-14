@@ -12,6 +12,9 @@ function SettingsPage() {
   // mode can be 'smart', 'all', or 'custom'
   const [mode, setMode] = useState<"smart" | "all" | "custom">("smart");
   const [customSize, setCustomSize] = useState<number>(300);
+  const [smartWindowSize, setSmartWindowSize] = useState<number | null>(null);
+  const [actualActiveMode, setActualActiveMode] = useState<"smart" | "all" | "custom">("smart");
+  const [actualActiveCustomSize, setActualActiveCustomSize] = useState<number>(300);
   
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
@@ -25,11 +28,15 @@ function SettingsPage() {
         if (data && data.windowSize !== undefined) {
           if (data.windowSize === -2) {
             setMode("smart");
+            setActualActiveMode("smart");
           } else if (data.windowSize === -1) {
             setMode("all");
+            setActualActiveMode("all");
           } else {
             setMode("custom");
             setCustomSize(data.windowSize || 300);
+            setActualActiveMode("custom");
+            setActualActiveCustomSize(data.windowSize || 300);
           }
         }
       } catch (err) {
@@ -38,7 +45,29 @@ function SettingsPage() {
         setLoading(false);
       }
     };
+    
+    const fetchSmart = async () => {
+      try {
+        const res = await fetch("/api/window-simulation");
+        const json = await res.json();
+        if (!json.error && json.bs) {
+          const engineData = json.bs;
+          const windows = Object.keys(engineData).map(Number).sort((a, b) => a - b);
+          let bestWindow = windows[0];
+          let maxWinRate = 0;
+          for (const w of windows) {
+            if (engineData[w.toString()].win_rate > maxWinRate) {
+              maxWinRate = engineData[w.toString()].win_rate;
+              bestWindow = w;
+            }
+          }
+          setSmartWindowSize(bestWindow);
+        }
+      } catch (e) {}
+    };
+
     fetchState();
+    fetchSmart();
   }, []);
 
   const handleSave = async () => {
@@ -58,6 +87,10 @@ function SettingsPage() {
       const data = await res.json();
       if (data.success) {
         setMessage({ text: "Settings saved successfully!", type: "success" });
+        setActualActiveMode(mode);
+        if (mode === "custom") {
+          setActualActiveCustomSize(customSize);
+        }
       } else {
         setMessage({ text: data.message || "Failed to save settings.", type: "error" });
       }
@@ -122,6 +155,21 @@ function SettingsPage() {
                     Choose how the AI analyzes historical games to formulate its next prediction. 
                   </p>
                   
+                  {/* Current Active Banner */}
+                  <div className="mb-6 p-4 rounded-xl bg-indigo-50 border border-indigo-100 dark:bg-indigo-500/10 dark:border-indigo-500/20 flex items-center gap-3">
+                    <Activity className="w-5 h-5 text-indigo-500" />
+                    <div>
+                      <span className="text-sm font-bold text-indigo-900 dark:text-indigo-300">Currently Active Window: </span>
+                      <span className="text-sm font-medium text-indigo-700 dark:text-indigo-400">
+                        {actualActiveMode === 'smart' 
+                          ? `${smartWindowSize ? smartWindowSize + " games" : "Calculating..."} (Smart Auto-detected)` 
+                          : actualActiveMode === 'all' 
+                            ? "All Available Games" 
+                            : `${actualActiveCustomSize} games`}
+                      </span>
+                    </div>
+                  </div>
+
                   <div className="space-y-3 mb-6">
                     <button 
                       onClick={() => setMode("smart")}
@@ -133,6 +181,11 @@ function SettingsPage() {
                       <div>
                         <h4 className={`font-bold ${mode === "smart" ? 'text-indigo-900 dark:text-indigo-300' : 'text-gray-700 dark:text-gray-300'}`}>Smart Window Detection</h4>
                         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Automatically tests various historical windows in real-time and applies the one with the highest proven win rate.</p>
+                        {smartWindowSize && (
+                          <div className="mt-2 text-xs font-bold text-indigo-600 bg-indigo-100 dark:bg-indigo-500/20 px-2 py-1 rounded w-fit">
+                            Currently optimal: {smartWindowSize} games
+                          </div>
+                        )}
                       </div>
                     </button>
 
