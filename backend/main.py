@@ -619,3 +619,77 @@ def get_earning_history(timer: str = "30S", page: int = 1, limit: int = 50, db: 
             "rgWinRate": rg_win_rate
         }
     }
+
+@app.get("/api/simulate")
+def run_simulation(
+    timer: str = "30S", 
+    hours: int = 10, 
+    baseBet: float = 1.0, 
+    maxLevel: int = 8, 
+    db: Session = Depends(get_db)
+):
+    cutoff_time = int(time.time() * 1000) - (hours * 3600 * 1000)
+    
+    logs = db.query(models.PredictionLog).filter(
+        models.PredictionLog.timer_type == timer,
+        models.PredictionLog.time >= cutoff_time
+    ).order_by(models.PredictionLog.id.asc()).all()
+    
+    bs_current_level = 1
+    rg_current_level = 1
+    
+    total_profit = 0
+    total_games_bs = 0
+    total_games_rg = 0
+    bs_max_hits = 0
+    rg_max_hits = 0
+    total_bet_loss_max = 0
+    
+    for l in logs:
+        # Simulate BS
+        if l.bs_status in ['WIN', 'LOSS']:
+            total_games_bs += 1
+            bet_amount = baseBet * (3 ** (bs_current_level - 1))
+            if l.bs_status == 'WIN':
+                total_profit -= bet_amount
+                total_profit += bet_amount * 1.96
+                bs_current_level = 1
+            elif l.bs_status == 'LOSS':
+                total_profit -= bet_amount
+                if bs_current_level >= maxLevel:
+                    bs_max_hits += 1
+                    bs_current_level = 1
+                else:
+                    bs_current_level += 1
+                    
+        # Simulate RG
+        if l.rg_status in ['WIN', 'LOSS']:
+            total_games_rg += 1
+            bet_amount = baseBet * (3 ** (rg_current_level - 1))
+            if l.rg_status == 'WIN':
+                total_profit -= bet_amount
+                total_profit += bet_amount * 1.96
+                rg_current_level = 1
+            elif l.rg_status == 'LOSS':
+                total_profit -= bet_amount
+                if rg_current_level >= maxLevel:
+                    rg_max_hits += 1
+                    rg_current_level = 1
+                else:
+                    rg_current_level += 1
+
+    total_games = max(total_games_bs, total_games_rg)
+
+    # Required capital for max level (assuming 3x martingale)
+    capital_req = sum(baseBet * (3 ** i) for i in range(maxLevel))
+                    
+    return {
+        "totalProfit": total_profit,
+        "totalGames": total_games,
+        "bsMaxLevelHits": bs_max_hits,
+        "rgMaxLevelHits": rg_max_hits,
+        "totalMaxLevelHits": bs_max_hits + rg_max_hits,
+        "samplesAnalyzed": len(logs),
+        "capitalRequired": capital_req
+    }
+

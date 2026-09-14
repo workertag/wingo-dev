@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { Calculator, Play, DollarSign, Clock, Layers, TrendingUp, AlertCircle, ShieldAlert } from "lucide-react";
+import { Calculator, Play, DollarSign, Clock, Layers, TrendingUp, AlertCircle, ShieldAlert, Zap, RefreshCcw } from "lucide-react";
 
 export const Route = createFileRoute("/calculator")({
   component: CalculatorPage,
@@ -11,75 +11,32 @@ function CalculatorPage() {
   const [baseBet, setBaseBet] = useState<number>(1);
   const [maxLevel, setMaxLevel] = useState<number>(8);
   const [hours, setHours] = useState<number>(10);
-  const [gamesPerHour, setGamesPerHour] = useState<number>(60); // Default 1M
-  const [winRate, setWinRate] = useState<number>(54); // Default 54% for AI
+  const [timer, setTimer] = useState<string>("30S");
+  const [loading, setLoading] = useState(false);
 
   const [simulationResult, setSimulationResult] = useState<any>(null);
 
-  const handleSimulate = () => {
-    const totalGames = hours * gamesPerHour;
-    const pWin = winRate / 100;
-    const pLoss = 1 - pWin;
-
-    let currentBalance = balance;
-    let maxDrawdown = 0;
-    let peakBalance = balance;
-    let currentLevel = 1;
-    let wins = 0;
-    let losses = 0;
-    let maxLevelHits = 0;
-
-    // Simulation loop (deterministic-ish expected value, or random? Let's do expected probability based to be deterministic)
-    // Actually, Monte-carlo is better, but maybe just a fixed deterministic expected value is what they want.
-    // Let's do a deterministic expected value calculation.
-    
-    // In a Wingo 3x system:
-    // Level 1: Bet 1. Win = 1.96
-    // Level n: Bet 3^(n-1). Win = 3^(n-1) * 1.96
-
-    let totalProfit = 0;
-    
-    // Calculate expected profit per sequence
-    let expectedProfitPerSequence = 0;
-    let expectedLengthPerSequence = 0;
-    
-    let probReachingLevel = 1.0;
-    let totalBetSoFar = 0;
-
-    for (let i = 1; i <= maxLevel; i++) {
-      const betAmount = baseBet * Math.pow(3, i - 1);
-      totalBetSoFar += betAmount;
+  const handleSimulate = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/simulate?timer=${timer}&hours=${hours}&baseBet=${baseBet}&maxLevel=${maxLevel}`);
+      const data = await res.json();
       
-      const winAmount = betAmount * 1.96;
-      const profitIfWin = winAmount - totalBetSoFar;
+      const finalBalance = balance + (data.totalProfit || 0);
       
-      const probWinHere = probReachingLevel * pWin;
-      
-      expectedProfitPerSequence += probWinHere * profitIfWin;
-      expectedLengthPerSequence += probReachingLevel * pWin * i;
-      
-      probReachingLevel *= pLoss; // Probability of reaching next level
+      setSimulationResult({
+        finalBalance,
+        totalProfit: data.totalProfit || 0,
+        totalGames: data.totalGames || 0,
+        totalMaxLevelHits: data.totalMaxLevelHits || 0,
+        samplesAnalyzed: data.samplesAnalyzed || 0,
+        capitalRequired: data.capitalRequired || 0
+      });
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
-
-    // If it loses at max level, we lose the total bet so far
-    const probLosingMax = probReachingLevel;
-    expectedProfitPerSequence -= probLosingMax * totalBetSoFar;
-    expectedLengthPerSequence += probLosingMax * maxLevel; // Sequences that max out take maxLevel games
-
-    const totalSequences = totalGames / expectedLengthPerSequence;
-    totalProfit = totalSequences * expectedProfitPerSequence;
-    
-    const finalBalance = balance + totalProfit;
-    
-    setSimulationResult({
-      finalBalance,
-      totalProfit,
-      totalGames,
-      totalSequences,
-      expectedProfitPerSequence,
-      probLosingMax,
-      maxLevelLossTotal: totalBetSoFar, // Total capital at risk for max level
-    });
   };
 
   return (
@@ -88,11 +45,38 @@ function CalculatorPage() {
         <div>
           <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Tools</div>
           <h2 className="text-4xl font-black text-indigo-600 tracking-tight leading-none mb-2">
-            Profit <span className="text-slate-900">Simulator</span>
+            Historical <span className="text-slate-900">Simulator</span>
           </h2>
           <p className="text-sm font-medium text-slate-500">
-            Calculate estimated balance based on historical parameters.
+            Calculate exactly what your balance would be by replaying historical games.
           </p>
+        </div>
+        
+        <div className="flex items-center gap-4">
+          <div className="flex p-1.5 bg-white rounded-full shadow-[0_2px_10px_rgba(0,0,0,0.04)] border border-slate-100">
+            <button
+              onClick={() => setTimer("30S")}
+              className={`flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-bold transition-all ${
+                timer === "30S"
+                  ? "bg-gradient-to-r from-indigo-500 to-violet-500 text-white shadow-md shadow-indigo-500/20"
+                  : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"
+              }`}
+            >
+              {timer === "30S" && <Zap className="w-4 h-4" fill="currentColor" />}
+              30 SEC
+            </button>
+            <button
+              onClick={() => setTimer("1M")}
+              className={`flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-bold transition-all ${
+                timer === "1M"
+                  ? "bg-gradient-to-r from-indigo-500 to-violet-500 text-white shadow-md shadow-indigo-500/20"
+                  : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"
+              }`}
+            >
+              {timer === "1M" && <Zap className="w-4 h-4" fill="currentColor" />}
+              1 MIN
+            </button>
+          </div>
         </div>
       </div>
 
@@ -164,28 +148,14 @@ function CalculatorPage() {
                   />
                 </div>
               </div>
-              
-              <div className="pt-2 border-t border-slate-100">
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-                  Expected Win Rate (%)
-                </label>
-                <div className="relative">
-                  <TrendingUp className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                  <input 
-                    type="number" 
-                    value={winRate}
-                    onChange={(e) => setWinRate(Number(e.target.value))}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-9 pr-4 text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
-                  />
-                </div>
-              </div>
 
               <button 
                 onClick={handleSimulate}
-                className="w-full mt-4 flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-indigo-500/25 transition-all active:scale-[0.98]"
+                disabled={loading}
+                className="w-full mt-4 flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-indigo-500/25 transition-all active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
               >
-                <Play className="w-5 h-5 fill-current" />
-                Run Simulation
+                {loading ? <RefreshCcw className="w-5 h-5 animate-spin" /> : <Play className="w-5 h-5 fill-current" />}
+                {loading ? "Replaying Database..." : "Run Simulation"}
               </button>
             </div>
           </div>
@@ -197,20 +167,20 @@ function CalculatorPage() {
               <div className="bg-gradient-to-br from-slate-900 to-indigo-950 rounded-3xl p-8 shadow-xl border border-slate-800 text-white relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-32 bg-indigo-500/10 blur-[100px] rounded-full pointer-events-none"></div>
                 
-                <p className="text-xs font-bold text-indigo-300 uppercase tracking-widest mb-2 relative z-10">Estimated Final Balance</p>
+                <p className="text-xs font-bold text-indigo-300 uppercase tracking-widest mb-2 relative z-10">Historical Final Balance</p>
                 <h3 className="text-5xl md:text-6xl font-black mb-6 relative z-10 flex items-center gap-2">
                   ₹{simulationResult.finalBalance.toLocaleString(undefined, { maximumFractionDigits: 2 })}
                 </h3>
                 
                 <div className="grid grid-cols-2 gap-4 pt-6 border-t border-slate-700/50 relative z-10">
                   <div>
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Total Expected Profit</p>
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Actual Net Profit</p>
                     <p className={`text-xl font-bold ${simulationResult.totalProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
                       {simulationResult.totalProfit >= 0 ? '+' : ''}₹{simulationResult.totalProfit.toLocaleString(undefined, { maximumFractionDigits: 2 })}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Total Games Played</p>
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Total Bets Placed</p>
                     <p className="text-xl font-bold text-white">{simulationResult.totalGames}</p>
                   </div>
                 </div>
@@ -220,20 +190,22 @@ function CalculatorPage() {
                 <div className="bg-white rounded-3xl p-6 shadow-[0_8px_30px_rgba(0,0,0,0.03)] border border-slate-100">
                   <h4 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
                     <TrendingUp className="w-4 h-4 text-emerald-500" />
-                    Sequence Metrics
+                    Backtest Data
                   </h4>
                   <div className="space-y-4">
                     <div className="flex justify-between items-center pb-3 border-b border-slate-50">
-                      <span className="text-sm font-medium text-slate-500">Expected Sequences</span>
-                      <span className="font-bold text-slate-800">{Math.round(simulationResult.totalSequences)}</span>
+                      <span className="text-sm font-medium text-slate-500">Historical Games Analyzed</span>
+                      <span className="font-bold text-slate-800">{simulationResult.samplesAnalyzed}</span>
                     </div>
                     <div className="flex justify-between items-center pb-3 border-b border-slate-50">
-                      <span className="text-sm font-medium text-slate-500">Avg Profit per Seq</span>
-                      <span className="font-bold text-emerald-600">₹{simulationResult.expectedProfitPerSequence.toFixed(2)}</span>
+                      <span className="text-sm font-medium text-slate-500">Avg Profit per Game</span>
+                      <span className="font-bold text-emerald-600">
+                        ₹{(simulationResult.totalProfit / Math.max(1, simulationResult.totalGames)).toFixed(2)}
+                      </span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm font-medium text-slate-500">Required Capital for Max Lvl</span>
-                      <span className="font-bold text-rose-600">₹{simulationResult.maxLevelLossTotal.toLocaleString()}</span>
+                      <span className="font-bold text-indigo-600">₹{simulationResult.capitalRequired.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
                     </div>
                   </div>
                 </div>
@@ -245,17 +217,11 @@ function CalculatorPage() {
                   </h4>
                   <div className="space-y-4">
                     <div className="flex justify-between items-center pb-3 border-b border-slate-50">
-                      <span className="text-sm font-medium text-slate-500">Ruin Probability (per seq)</span>
-                      <span className="font-bold text-rose-500">{(simulationResult.probLosingMax * 100).toFixed(4)}%</span>
-                    </div>
-                    <div className="flex justify-between items-center pb-3 border-b border-slate-50">
-                      <span className="text-sm font-medium text-slate-500">Est. Max Level Hits</span>
-                      <span className="font-bold text-slate-800">
-                        {Math.round(simulationResult.totalSequences * simulationResult.probLosingMax)}
-                      </span>
+                      <span className="text-sm font-medium text-slate-500">Actual Max Level Ruin Hits</span>
+                      <span className="font-bold text-rose-500">{simulationResult.totalMaxLevelHits}</span>
                     </div>
                     <div className="text-xs font-medium text-slate-400 bg-slate-50 p-3 rounded-lg leading-relaxed">
-                      If capital drops below Required Capital, you cannot afford the maximum level bet and simulation ends.
+                      Every Max Level Hit represents a full loss of the Required Capital across a streak.
                     </div>
                   </div>
                 </div>
@@ -266,9 +232,9 @@ function CalculatorPage() {
               <div className="w-16 h-16 bg-white rounded-2xl shadow-sm border border-slate-100 flex items-center justify-center mb-6">
                 <Calculator className="w-8 h-8 text-indigo-300" />
               </div>
-              <h3 className="text-xl font-black text-slate-700 mb-2">Ready to Simulate</h3>
+              <h3 className="text-xl font-black text-slate-700 mb-2">Ready to Backtest</h3>
               <p className="text-sm text-slate-500 text-center max-w-sm">
-                Enter your current balance, starting bet, maximum level, and time duration, then run the simulation to estimate your hypothetical earnings.
+                Enter your current balance, starting bet, maximum level, and time duration, then run the simulation to replay real games from the database.
               </p>
             </div>
           )}
@@ -277,3 +243,4 @@ function CalculatorPage() {
     </div>
   );
 }
+
