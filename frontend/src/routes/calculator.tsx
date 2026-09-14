@@ -252,8 +252,20 @@ function CalculatorPage() {
                       <span className="text-sm font-medium text-slate-500">Historical Games Analyzed</span>
                       <span className="font-bold text-slate-800">{simulationResult.samplesAnalyzed}</span>
                     </div>
+                    <div className="flex justify-between items-center pb-3 border-b border-slate-50">
+                      <span className="text-sm font-medium text-slate-500">Total Fees Deducted</span>
+                      <span className="font-bold text-rose-500">
+                        ₹{(simulationResult.totalProfitGross - simulationResult.totalProfit).toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center pb-3 border-b border-slate-50">
+                      <span className="text-sm font-medium text-slate-500">Avg Fee per Sequence</span>
+                      <span className="font-bold text-rose-400">
+                        ₹{((simulationResult.totalProfitGross - simulationResult.totalProfit) / Math.max(1, simulationResult.totalGames)).toFixed(2)}
+                      </span>
+                    </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium text-slate-500">Avg Profit per Game</span>
+                      <span className="text-sm font-medium text-slate-500">Avg Net Profit per Sequence</span>
                       <span className="font-bold text-emerald-600">
                         ₹{(simulationResult.totalProfit / Math.max(1, simulationResult.totalGames)).toFixed(2)}
                       </span>
