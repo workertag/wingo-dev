@@ -259,6 +259,14 @@ function CalculatorPage() {
                       </span>
                     </div>
                     <div className="flex justify-between items-center pb-3 border-b border-slate-50">
+                      <span className="text-sm font-medium text-slate-500">Effective Fee Rate (on Gross)</span>
+                      <span className="font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded text-xs">
+                        {simulationResult.totalProfitGross > 0 
+                          ? (((simulationResult.totalProfitGross - simulationResult.totalProfit) / simulationResult.totalProfitGross) * 100).toFixed(1) + "%" 
+                          : "0%"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center pb-3 border-b border-slate-50">
                       <span className="text-sm font-medium text-slate-500">Avg Fee per Sequence</span>
                       <span className="font-bold text-rose-400">
                         ₹{((simulationResult.totalProfitGross - simulationResult.totalProfit) / Math.max(1, simulationResult.totalGames)).toFixed(2)}
