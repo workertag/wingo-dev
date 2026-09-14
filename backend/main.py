@@ -661,6 +661,7 @@ def simulate(
     rg_current_level = 1
     
     total_profit = 0
+    total_profit_gross = 0
     total_bets_placed = 0
     bs_max_hits = 0
     rg_max_hits = 0
@@ -675,9 +676,12 @@ def simulate(
                 if l.bs_status == 'WIN':
                     total_profit -= bet_amount
                     total_profit += bet_amount * 1.96
+                    total_profit_gross -= bet_amount
+                    total_profit_gross += bet_amount * 2.0
                     bs_current_level = 1
                 elif l.bs_status == 'LOSS':
                     total_profit -= bet_amount
+                    total_profit_gross -= bet_amount
                     if bs_current_level >= maxLevel:
                         bs_max_hits += 1
                         bs_current_level = 1
@@ -699,9 +703,12 @@ def simulate(
                 if l.rg_status == 'WIN':
                     total_profit -= bet_amount
                     total_profit += bet_amount * 1.96
+                    total_profit_gross -= bet_amount
+                    total_profit_gross += bet_amount * 2.0
                     rg_current_level = 1
                 elif l.rg_status == 'LOSS':
                     total_profit -= bet_amount
+                    total_profit_gross -= bet_amount
                     if rg_current_level >= maxLevel:
                         rg_max_hits += 1
                         rg_current_level = 1
@@ -716,6 +723,7 @@ def simulate(
 
     return {
         "totalProfit": total_profit,
+        "totalProfitGross": total_profit_gross,
         "totalGames": total_bets_placed,
         "bsMaxLevelHits": bs_max_hits,
         "rgMaxLevelHits": rg_max_hits,
@@ -723,4 +731,5 @@ def simulate(
         "samplesAnalyzed": len(logs),
         "capitalRequired": capital_req
     }
+
 

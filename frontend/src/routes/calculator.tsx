@@ -26,6 +26,7 @@ function CalculatorPage() {
       
       setSimulationResult({
         totalProfit: data.totalProfit || 0,
+        totalProfitGross: data.totalProfitGross || 0,
         totalGames: data.totalGames || 0,
         totalMaxLevelHits: data.totalMaxLevelHits || 0,
         samplesAnalyzed: data.samplesAnalyzed || 0,
@@ -220,9 +221,15 @@ function CalculatorPage() {
                   ₹{simulationResult.capitalRequired.toLocaleString(undefined, { maximumFractionDigits: 2 })}
                 </h3>
                 
-                <div className="grid grid-cols-2 gap-4 pt-6 border-t border-slate-700/50 relative z-10">
+                <div className="grid grid-cols-3 gap-4 pt-6 border-t border-slate-700/50 relative z-10">
                   <div>
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Actual Net Profit</p>
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Gross Profit (No Fee)</p>
+                    <p className={`text-xl font-bold ${simulationResult.totalProfitGross >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                      {simulationResult.totalProfitGross >= 0 ? '+' : ''}₹{simulationResult.totalProfitGross.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Net Profit (-4% Fee)</p>
                     <p className={`text-xl font-bold ${simulationResult.totalProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
                       {simulationResult.totalProfit >= 0 ? '+' : ''}₹{simulationResult.totalProfit.toLocaleString(undefined, { maximumFractionDigits: 2 })}
                     </p>
