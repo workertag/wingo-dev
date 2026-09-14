@@ -52,32 +52,7 @@ function CalculatorPage() {
           </p>
         </div>
         
-        <div className="flex items-center gap-4">
-          <div className="flex p-1.5 bg-white rounded-full shadow-[0_2px_10px_rgba(0,0,0,0.04)] border border-slate-100">
-            <button
-              onClick={() => setTimer("30S")}
-              className={`flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-bold transition-all ${
-                timer === "30S"
-                  ? "bg-gradient-to-r from-indigo-500 to-violet-500 text-white shadow-md shadow-indigo-500/20"
-                  : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"
-              }`}
-            >
-              {timer === "30S" && <Zap className="w-4 h-4" fill="currentColor" />}
-              30 SEC
-            </button>
-            <button
-              onClick={() => setTimer("1M")}
-              className={`flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-bold transition-all ${
-                timer === "1M"
-                  ? "bg-gradient-to-r from-indigo-500 to-violet-500 text-white shadow-md shadow-indigo-500/20"
-                  : "text-slate-500 hover:text-slate-800 hover:bg-slate-50"
-              }`}
-            >
-              {timer === "1M" && <Zap className="w-4 h-4" fill="currentColor" />}
-              1 MIN
-            </button>
-          </div>
-        </div>
+        
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -151,6 +126,36 @@ function CalculatorPage() {
                     onChange={(e) => setHours(Number(e.target.value))}
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-9 pr-4 text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                   />
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-slate-100">
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">
+                  Timer Selection
+                </label>
+                <div className="flex p-1 bg-slate-50 rounded-xl border border-slate-200">
+                  <button
+                    onClick={() => setTimer("30S")}
+                    className={`flex-1 flex justify-center items-center gap-2 py-2.5 rounded-lg text-sm font-bold transition-all ${
+                      timer === "30S"
+                        ? "bg-white text-indigo-600 shadow-sm border border-slate-200/60"
+                        : "text-slate-400 hover:text-slate-600"
+                    }`}
+                  >
+                    {timer === "30S" && <Zap className="w-4 h-4" />}
+                    30 SEC
+                  </button>
+                  <button
+                    onClick={() => setTimer("1M")}
+                    className={`flex-1 flex justify-center items-center gap-2 py-2.5 rounded-lg text-sm font-bold transition-all ${
+                      timer === "1M"
+                        ? "bg-white text-indigo-600 shadow-sm border border-slate-200/60"
+                        : "text-slate-400 hover:text-slate-600"
+                    }`}
+                  >
+                    {timer === "1M" && <Zap className="w-4 h-4" />}
+                    1 MIN
+                  </button>
                 </div>
               </div>
 
