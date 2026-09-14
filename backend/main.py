@@ -621,19 +621,40 @@ def get_earning_history(timer: str = "30S", page: int = 1, limit: int = 50, db: 
     }
 
 @app.get("/api/simulate")
-def run_simulation(
-    timer: str = "30S", 
-    hours: int = 10, 
-    baseBet: float = 1.0, 
-    maxLevel: int = 8, 
+def simulate(
+    hours: int = 10,
+    baseBet: float = 1.0,
+    maxLevel: int = 8,
+    timer: str = "30S",
+    multiplier: float = 2.0,
+    smartMultiplier: bool = False,
     db: Session = Depends(get_db)
 ):
+    import time
+    import math
     cutoff_time = int(time.time() * 1000) - (hours * 3600 * 1000)
     
     logs = db.query(models.PredictionLog).filter(
         models.PredictionLog.timer_type == timer,
         models.PredictionLog.time >= cutoff_time
     ).order_by(models.PredictionLog.id.asc()).all()
+    
+    # Pre-calculate sequence bets and required capital
+    bets = []
+    total_lost = 0
+    for i in range(maxLevel):
+        if smartMultiplier:
+            if i == 0:
+                bet = baseBet
+            else:
+                bet = math.ceil((total_lost + baseBet) / 0.96)
+        else:
+            bet = baseBet * (multiplier ** i)
+            # if user passes baseBet=1, multiplier=2, it correctly does 1, 2, 4, 8...
+        bets.append(bet)
+        total_lost += bet
+        
+    capital_req = sum(bets)
     
     bs_current_level = 1
     rg_current_level = 1
@@ -643,13 +664,12 @@ def run_simulation(
     total_games_rg = 0
     bs_max_hits = 0
     rg_max_hits = 0
-    total_bet_loss_max = 0
     
     for l in logs:
         # Simulate BS
         if l.bs_status in ['WIN', 'LOSS']:
             total_games_bs += 1
-            bet_amount = baseBet * (2 ** (bs_current_level - 1))
+            bet_amount = bets[bs_current_level - 1]
             if l.bs_status == 'WIN':
                 total_profit -= bet_amount
                 total_profit += bet_amount * 1.96
@@ -665,7 +685,7 @@ def run_simulation(
         # Simulate RG
         if l.rg_status in ['WIN', 'LOSS']:
             total_games_rg += 1
-            bet_amount = baseBet * (2 ** (rg_current_level - 1))
+            bet_amount = bets[rg_current_level - 1]
             if l.rg_status == 'WIN':
                 total_profit -= bet_amount
                 total_profit += bet_amount * 1.96
@@ -679,9 +699,6 @@ def run_simulation(
                     rg_current_level += 1
 
     total_games = max(total_games_bs, total_games_rg)
-
-    # Required capital for max level (assuming 2x martingale)
-    capital_req = sum(baseBet * (2 ** i) for i in range(maxLevel))
                     
     return {
         "totalProfit": total_profit,
