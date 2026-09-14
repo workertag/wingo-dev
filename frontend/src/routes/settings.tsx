@@ -25,18 +25,19 @@ function SettingsPage() {
       try {
         const res = await fetch("/api/state?timer=30S");
         const data = await res.json();
-        if (data && data.windowSize !== undefined) {
-          if (data.windowSize === -2) {
+        const windowSize = data?.state?.windowSize;
+        if (windowSize !== undefined) {
+          if (windowSize === -2) {
             setMode("smart");
             setActualActiveMode("smart");
-          } else if (data.windowSize === -1) {
+          } else if (windowSize === -1) {
             setMode("all");
             setActualActiveMode("all");
           } else {
             setMode("custom");
-            setCustomSize(data.windowSize || 300);
+            setCustomSize(windowSize || 300);
             setActualActiveMode("custom");
-            setActualActiveCustomSize(data.windowSize || 300);
+            setActualActiveCustomSize(windowSize || 300);
           }
         }
       } catch (err) {
