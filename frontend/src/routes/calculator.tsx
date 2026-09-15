@@ -30,13 +30,23 @@ function CalculatorPage() {
         totalGames: data.totalGames || 0,
         totalMaxLevelHits: data.totalMaxLevelHits || 0,
         samplesAnalyzed: data.samplesAnalyzed || 0,
-        capitalRequired: data.capitalRequired || 0
+        capitalRequired: data.capitalRequired || 0,
+        startTime: data.startTime || null,
+        endTime: data.endTime || null,
+        betSequence: data.betSequence || []
       });
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
     }
+  };
+
+  const formatTime = (ms: number) => {
+    if (!ms) return "";
+    return new Date(ms).toLocaleString(undefined, { 
+      month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' 
+    });
   };
 
   return (
@@ -248,6 +258,14 @@ function CalculatorPage() {
                     Backtest Data
                   </h4>
                   <div className="space-y-4">
+                    {simulationResult.startTime && simulationResult.endTime && (
+                      <div className="flex justify-between items-center pb-3 border-b border-slate-50">
+                        <span className="text-sm font-medium text-slate-500">Time Range</span>
+                        <span className="font-bold text-slate-800 text-[11px] bg-slate-100 px-2 py-1 rounded-md">
+                          {formatTime(simulationResult.startTime)} - {formatTime(simulationResult.endTime)}
+                        </span>
+                      </div>
+                    )}
                     <div className="flex justify-between items-center pb-3 border-b border-slate-50">
                       <span className="text-sm font-medium text-slate-500">Historical Games Analyzed</span>
                       <span className="font-bold text-slate-800">{simulationResult.samplesAnalyzed}</span>
@@ -295,6 +313,31 @@ function CalculatorPage() {
                       Every Max Level Hit represents a full loss of the Required Capital across a streak.
                     </div>
                   </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-3xl p-6 shadow-[0_8px_30px_rgba(0,0,0,0.03)] border border-slate-100">
+                <h4 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
+                  <Layers className="w-4 h-4 text-indigo-500" />
+                  Calculated Bet Sequence
+                </h4>
+                <div className="overflow-x-auto pb-2">
+                  <div className="flex gap-2">
+                    {simulationResult.betSequence && simulationResult.betSequence.map((betAmt: number, index: number) => (
+                      <div key={index} className="flex flex-col flex-shrink-0 bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 min-w-[100px] text-center">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                          Level {index + 1}
+                        </span>
+                        <span className="text-sm font-black text-indigo-600">
+                          ₹{betAmt.toLocaleString()}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="text-xs font-medium text-slate-400 mt-2 flex gap-1.5 items-center bg-indigo-50/50 p-2 rounded text-indigo-600">
+                  <AlertCircle className="w-3.5 h-3.5" />
+                  This is the exact sequence of required bets based on your Base Bet and Multiplier settings.
                 </div>
               </div>
             </div>
