@@ -321,8 +321,8 @@ function CalculatorPage() {
                   <Layers className="w-4 h-4 text-indigo-500" />
                   Calculated Bet Sequence
                 </h4>
-                <div className="overflow-x-auto pb-2">
-                  <div className="flex gap-2">
+                <div className="pt-2 pb-2">
+                  <div className="flex flex-wrap gap-2">
                     {simulationResult.betSequence && simulationResult.betSequence.map((betAmt: number, index: number) => (
                       <div key={index} className="flex flex-col flex-shrink-0 bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 min-w-[100px] text-center">
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
