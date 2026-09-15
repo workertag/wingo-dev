@@ -624,7 +624,7 @@ def get_earning_history(timer: str = "30S", page: int = 1, limit: int = 50, db: 
 def simulate(
     hours: int = 10,
     baseBet: float = 1.0,
-    maxLevel: int = 8,
+    maxLevel: int = 15,
     startingLevel: int = 1,
     timer: str = "30S",
     multiplier: float = 2.0,
@@ -721,6 +721,9 @@ def simulate(
                 elif l.rg_status == 'LOSS':
                     rg_current_level += 1
 
+    start_time = logs[0].time if logs else cutoff_time
+    end_time = logs[-1].time if logs else int(time.time() * 1000)
+
     return {
         "totalProfit": total_profit,
         "totalProfitGross": total_profit_gross,
@@ -729,7 +732,10 @@ def simulate(
         "rgMaxLevelHits": rg_max_hits,
         "totalMaxLevelHits": bs_max_hits + rg_max_hits,
         "samplesAnalyzed": len(logs),
-        "capitalRequired": capital_req
+        "capitalRequired": capital_req,
+        "startTime": start_time,
+        "endTime": end_time,
+        "betSequence": bets
     }
 
 
