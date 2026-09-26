@@ -15,7 +15,7 @@ function HeatmapPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("30S");
   const [activeEngine, setActiveEngine] = useState("bs"); // 'bs' or 'rg'
-  const [windowDays, setWindowDays] = useState(7); // 7, 14, 30
+  const [windowDays, setWindowDays] = useState(30); // 30, 60, 90
 
   const fetchAnalytics = async (tab: string) => {
     setLoading(true);
@@ -103,22 +103,22 @@ function HeatmapPage() {
         
         <div className="flex p-1 bg-white rounded-xl shadow-sm border border-slate-200">
           <button
-            onClick={() => setWindowDays(7)}
-            className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${windowDays === 7 ? 'bg-slate-800 text-white' : 'text-slate-500 hover:text-slate-700'}`}
-          >
-            7 Days
-          </button>
-          <button
-            onClick={() => setWindowDays(14)}
-            className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${windowDays === 14 ? 'bg-slate-800 text-white' : 'text-slate-500 hover:text-slate-700'}`}
-          >
-            14 Days
-          </button>
-          <button
             onClick={() => setWindowDays(30)}
             className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${windowDays === 30 ? 'bg-slate-800 text-white' : 'text-slate-500 hover:text-slate-700'}`}
           >
-            30 Days
+            1 Month
+          </button>
+          <button
+            onClick={() => setWindowDays(60)}
+            className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${windowDays === 60 ? 'bg-slate-800 text-white' : 'text-slate-500 hover:text-slate-700'}`}
+          >
+            2 Months
+          </button>
+          <button
+            onClick={() => setWindowDays(90)}
+            className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${windowDays === 90 ? 'bg-slate-800 text-white' : 'text-slate-500 hover:text-slate-700'}`}
+          >
+            3 Months
           </button>
         </div>
       </div>
