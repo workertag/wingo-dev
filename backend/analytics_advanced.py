@@ -177,8 +177,15 @@ def refresh_advanced_cache():
     db = SessionLocal()
     try:
         for timer in ["30S", "1M"]:
-            # Fetch enough logs to cover at least 3 months (90 days * 2880 logs/day = ~260,000)
-            logs = db.query(models.PredictionLog).filter(models.PredictionLog.timer_type == timer).order_by(models.PredictionLog.id.desc()).limit(300000).all()
+            # Fetch only the necessary columns to prevent OOM when loading 300,000 logs
+            logs = db.query(
+                models.PredictionLog.time,
+                models.PredictionLog.bs_status,
+                models.PredictionLog.rg_status,
+                models.PredictionLog.actual_side,
+                models.PredictionLog.actual_colour,
+                models.PredictionLog.num
+            ).filter(models.PredictionLog.timer_type == timer).order_by(models.PredictionLog.id.desc()).limit(300000).all()
             
             heatmap = calculate_heatmap(logs)
             sequences = calculate_sequences(logs)
